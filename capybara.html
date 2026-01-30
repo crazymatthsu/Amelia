@@ -35,6 +35,12 @@
             50% { transform: translateY(-10px); }
         }
 
+        .animals-container {
+            display: flex;
+            gap: 60px;
+            align-items: center;
+        }
+
         .capybara-container {
             position: relative;
             width: 300px;
@@ -54,8 +60,8 @@
             height: 100%;
         }
 
-        /* Body */
-        .body {
+        /* Capybara Body */
+        .capybara .body {
             position: absolute;
             width: 200px;
             height: 120px;
@@ -66,8 +72,8 @@
             box-shadow: inset -10px -10px 20px rgba(0,0,0,0.2);
         }
 
-        /* Head */
-        .head {
+        /* Capybara Head */
+        .capybara .head {
             position: absolute;
             width: 140px;
             height: 100px;
@@ -78,8 +84,8 @@
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.15);
         }
 
-        /* Snout */
-        .snout {
+        /* Capybara Snout */
+        .capybara .snout {
             position: absolute;
             width: 80px;
             height: 50px;
@@ -89,8 +95,8 @@
             left: 10px;
         }
 
-        /* Nose */
-        .nose {
+        /* Capybara Nose */
+        .capybara .nose {
             position: absolute;
             width: 25px;
             height: 18px;
@@ -106,8 +112,8 @@
             50% { transform: scale(1.1); }
         }
 
-        /* Eyes */
-        .eye {
+        /* Capybara Eyes */
+        .capybara .eye {
             position: absolute;
             width: 20px;
             height: 22px;
@@ -117,7 +123,7 @@
             animation: blink 4s ease-in-out infinite;
         }
 
-        .eye::after {
+        .capybara .eye::after {
             content: '';
             position: absolute;
             width: 6px;
@@ -128,16 +134,16 @@
             left: 5px;
         }
 
-        .eye.left { left: 35px; }
-        .eye.right { left: 75px; }
+        .capybara .eye.left { left: 35px; }
+        .capybara .eye.right { left: 75px; }
 
         @keyframes blink {
             0%, 45%, 55%, 100% { transform: scaleY(1); }
             50% { transform: scaleY(0.1); }
         }
 
-        /* Ears */
-        .ear {
+        /* Capybara Ears */
+        .capybara .ear {
             position: absolute;
             width: 30px;
             height: 25px;
@@ -146,15 +152,15 @@
             top: 50px;
         }
 
-        .ear.left {
+        .capybara .ear.left {
             left: 30px;
             transform: rotate(-20deg);
             animation: earWiggle 2s ease-in-out infinite;
         }
-        .ear.right {
+        .capybara .ear.right {
             left: 100px;
             transform: rotate(20deg);
-            animation: earWiggle 2s ease-in-out infinite 0.5s;
+            animation: earWiggleRight 2s ease-in-out infinite 0.5s;
         }
 
         @keyframes earWiggle {
@@ -162,17 +168,13 @@
             50% { transform: rotate(-10deg); }
         }
 
-        .ear.right {
-            animation-name: earWiggleRight;
-        }
-
         @keyframes earWiggleRight {
             0%, 100% { transform: rotate(20deg); }
             50% { transform: rotate(10deg); }
         }
 
-        /* Legs */
-        .leg {
+        /* Capybara Legs */
+        .capybara .leg {
             position: absolute;
             width: 35px;
             height: 40px;
@@ -181,13 +183,13 @@
             top: 195px;
         }
 
-        .leg.front-left { left: 70px; }
-        .leg.front-right { left: 115px; }
-        .leg.back-left { left: 170px; }
-        .leg.back-right { left: 210px; }
+        .capybara .leg.front-left { left: 70px; }
+        .capybara .leg.front-right { left: 115px; }
+        .capybara .leg.back-left { left: 170px; }
+        .capybara .leg.back-right { left: 210px; }
 
-        /* Tail */
-        .tail {
+        /* Capybara Tail */
+        .capybara .tail {
             position: absolute;
             width: 20px;
             height: 15px;
@@ -238,7 +240,286 @@
             }
         }
 
-        /* Water/grass decoration */
+        /* ============ CAT STYLES ============ */
+        .cat-container {
+            position: relative;
+            width: 200px;
+            height: 220px;
+            cursor: pointer;
+            animation: catFloat 2.5s ease-in-out infinite;
+        }
+
+        @keyframes catFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .cat {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Cat Body */
+        .cat .body {
+            position: absolute;
+            width: 120px;
+            height: 90px;
+            background: #FF8C00;
+            border-radius: 60px 60px 50px 50px;
+            top: 100px;
+            left: 40px;
+            box-shadow: inset -8px -8px 15px rgba(0,0,0,0.15);
+        }
+
+        /* Cat stripes */
+        .cat .body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 15px,
+                #E07000 15px,
+                #E07000 20px
+            );
+            border-radius: inherit;
+            opacity: 0.5;
+        }
+
+        /* Cat Head */
+        .cat .head {
+            position: absolute;
+            width: 100px;
+            height: 85px;
+            background: #FF8C00;
+            border-radius: 50% 50% 45% 45%;
+            top: 45px;
+            left: 50px;
+            box-shadow: inset -5px -5px 12px rgba(0,0,0,0.12);
+        }
+
+        /* Cat Ears */
+        .cat .cat-ear {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 35px solid #FF8C00;
+            top: 20px;
+        }
+
+        .cat .cat-ear::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid #FFB6C1;
+            top: 12px;
+            left: -10px;
+        }
+
+        .cat .cat-ear.left {
+            left: 55px;
+            transform: rotate(-15deg);
+            animation: catEarTwitch 3s ease-in-out infinite;
+        }
+
+        .cat .cat-ear.right {
+            left: 105px;
+            transform: rotate(15deg);
+            animation: catEarTwitch 3s ease-in-out infinite 1.5s;
+        }
+
+        @keyframes catEarTwitch {
+            0%, 90%, 100% { transform: rotate(-15deg); }
+            95% { transform: rotate(-5deg); }
+        }
+
+        /* Cat Eyes */
+        .cat .cat-eye {
+            position: absolute;
+            width: 22px;
+            height: 26px;
+            background: #90EE90;
+            border-radius: 50%;
+            top: 70px;
+            animation: catBlink 5s ease-in-out infinite;
+        }
+
+        .cat .cat-eye::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 18px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            top: 4px;
+            left: 7px;
+            animation: pupilDilate 4s ease-in-out infinite;
+        }
+
+        .cat .cat-eye.left { left: 65px; }
+        .cat .cat-eye.right { left: 110px; }
+
+        @keyframes catBlink {
+            0%, 48%, 52%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.1); }
+        }
+
+        @keyframes pupilDilate {
+            0%, 100% { transform: scaleX(1); }
+            50% { transform: scaleX(0.6); }
+        }
+
+        /* Cat Nose */
+        .cat .cat-nose {
+            position: absolute;
+            width: 12px;
+            height: 10px;
+            background: #FF69B4;
+            border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+            top: 100px;
+            left: 94px;
+        }
+
+        /* Cat Mouth */
+        .cat .cat-mouth {
+            position: absolute;
+            top: 108px;
+            left: 88px;
+        }
+
+        .cat .cat-mouth::before,
+        .cat .cat-mouth::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 8px;
+            border: 2px solid #1a1a1a;
+            border-top: none;
+            border-radius: 0 0 50% 50%;
+        }
+
+        .cat .cat-mouth::before { left: 0; }
+        .cat .cat-mouth::after { left: 10px; }
+
+        /* Cat Whiskers */
+        .cat .whiskers {
+            position: absolute;
+            top: 95px;
+            left: 50px;
+        }
+
+        .cat .whisker {
+            position: absolute;
+            width: 35px;
+            height: 2px;
+            background: #1a1a1a;
+            border-radius: 2px;
+        }
+
+        .cat .whisker.left-1 { transform: rotate(-10deg); top: 0; left: 0; }
+        .cat .whisker.left-2 { transform: rotate(0deg); top: 8px; left: -5px; }
+        .cat .whisker.left-3 { transform: rotate(10deg); top: 16px; left: 0; }
+        .cat .whisker.right-1 { transform: rotate(10deg); top: 0; left: 65px; }
+        .cat .whisker.right-2 { transform: rotate(0deg); top: 8px; left: 70px; }
+        .cat .whisker.right-3 { transform: rotate(-10deg); top: 16px; left: 65px; }
+
+        /* Cat Tail */
+        .cat .cat-tail {
+            position: absolute;
+            width: 15px;
+            height: 80px;
+            background: #FF8C00;
+            border-radius: 10px 10px 50% 50%;
+            top: 110px;
+            left: 150px;
+            transform-origin: bottom center;
+            animation: catTailSwish 1.5s ease-in-out infinite;
+        }
+
+        .cat .cat-tail::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 10px,
+                #E07000 10px,
+                #E07000 15px
+            );
+            border-radius: inherit;
+            opacity: 0.5;
+        }
+
+        @keyframes catTailSwish {
+            0%, 100% { transform: rotate(-20deg); }
+            50% { transform: rotate(20deg); }
+        }
+
+        /* Cat Legs */
+        .cat .cat-leg {
+            position: absolute;
+            width: 25px;
+            height: 35px;
+            background: #FF8C00;
+            border-radius: 10px 10px 15px 15px;
+            top: 170px;
+        }
+
+        .cat .cat-leg.front-left { left: 55px; }
+        .cat .cat-leg.front-right { left: 85px; }
+        .cat .cat-leg.back-left { left: 115px; }
+        .cat .cat-leg.back-right { left: 140px; }
+
+        /* Meow bubble */
+        .meow-bubble {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #FF8C00;
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .meow-bubble.show {
+            animation: meowPop 0.8s ease-out forwards;
+        }
+
+        @keyframes meowPop {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px) scale(0.5);
+            }
+            20% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1.1);
+            }
+            40% {
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-30px) scale(0.8);
+            }
+        }
+
+        /* Ground */
         .ground {
             position: absolute;
             bottom: 0;
@@ -251,38 +532,158 @@
 <body>
     <h1>I love Capy</h1>
 
-    <div class="capybara-container">
-        <div class="capybara">
-            <div class="ear left"></div>
-            <div class="ear right"></div>
-            <div class="head"></div>
-            <div class="snout"></div>
-            <div class="nose"></div>
-            <div class="eye left"></div>
-            <div class="eye right"></div>
-            <div class="body"></div>
-            <div class="tail"></div>
-            <div class="leg front-left"></div>
-            <div class="leg front-right"></div>
-            <div class="leg back-left"></div>
-            <div class="leg back-right"></div>
+    <div class="animals-container">
+        <div class="capybara-container">
+            <div class="capybara">
+                <div class="ear left"></div>
+                <div class="ear right"></div>
+                <div class="head"></div>
+                <div class="snout"></div>
+                <div class="nose"></div>
+                <div class="eye left"></div>
+                <div class="eye right"></div>
+                <div class="body"></div>
+                <div class="tail"></div>
+                <div class="leg front-left"></div>
+                <div class="leg front-right"></div>
+                <div class="leg back-left"></div>
+                <div class="leg back-right"></div>
+            </div>
+            <div class="hearts">
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+            </div>
         </div>
-        <div class="hearts">
-            <span class="heart">❤️</span>
-            <span class="heart">❤️</span>
-            <span class="heart">❤️</span>
-            <span class="heart">❤️</span>
-            <span class="heart">❤️</span>
+
+        <div class="cat-container" id="cat">
+            <div class="meow-bubble" id="meowBubble">Meow!</div>
+            <div class="cat">
+                <div class="cat-ear left"></div>
+                <div class="cat-ear right"></div>
+                <div class="head"></div>
+                <div class="cat-eye left"></div>
+                <div class="cat-eye right"></div>
+                <div class="cat-nose"></div>
+                <div class="cat-mouth"></div>
+                <div class="whiskers">
+                    <div class="whisker left-1"></div>
+                    <div class="whisker left-2"></div>
+                    <div class="whisker left-3"></div>
+                    <div class="whisker right-1"></div>
+                    <div class="whisker right-2"></div>
+                    <div class="whisker right-3"></div>
+                </div>
+                <div class="body"></div>
+                <div class="cat-tail"></div>
+                <div class="cat-leg front-left"></div>
+                <div class="cat-leg front-right"></div>
+                <div class="cat-leg back-left"></div>
+                <div class="cat-leg back-right"></div>
+            </div>
         </div>
     </div>
 
     <div class="ground"></div>
 
     <script>
-        // Add click interaction
+        // Audio context for meow sound
+        let audioContext = null;
+
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playMeow() {
+            initAudio();
+
+            // Create oscillators for a cat meow sound
+            const now = audioContext.currentTime;
+
+            // Main meow tone
+            const osc1 = audioContext.createOscillator();
+            const gain1 = audioContext.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(700, now);
+            osc1.frequency.exponentialRampToValueAtTime(500, now + 0.1);
+            osc1.frequency.exponentialRampToValueAtTime(600, now + 0.2);
+            osc1.frequency.exponentialRampToValueAtTime(400, now + 0.4);
+            gain1.gain.setValueAtTime(0.3, now);
+            gain1.gain.exponentialRampToValueAtTime(0.4, now + 0.1);
+            gain1.gain.exponentialRampToValueAtTime(0.2, now + 0.3);
+            gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc1.connect(gain1);
+            gain1.connect(audioContext.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.5);
+
+            // Harmonic for richness
+            const osc2 = audioContext.createOscillator();
+            const gain2 = audioContext.createGain();
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(1400, now);
+            osc2.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
+            osc2.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+            osc2.frequency.exponentialRampToValueAtTime(800, now + 0.4);
+            gain2.gain.setValueAtTime(0.1, now);
+            gain2.gain.exponentialRampToValueAtTime(0.15, now + 0.1);
+            gain2.gain.exponentialRampToValueAtTime(0.05, now + 0.3);
+            gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc2.connect(gain2);
+            gain2.connect(audioContext.destination);
+            osc2.start(now);
+            osc2.stop(now + 0.5);
+
+            // Noise for breathiness
+            const bufferSize = audioContext.sampleRate * 0.5;
+            const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+            const noise = audioContext.createBufferSource();
+            noise.buffer = noiseBuffer;
+            const noiseGain = audioContext.createGain();
+            const noiseFilter = audioContext.createBiquadFilter();
+            noiseFilter.type = 'bandpass';
+            noiseFilter.frequency.value = 1000;
+            noiseFilter.Q.value = 2;
+            noiseGain.gain.setValueAtTime(0.05, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(audioContext.destination);
+            noise.start(now);
+            noise.stop(now + 0.5);
+        }
+
+        // Cat click handler
+        const cat = document.getElementById('cat');
+        const meowBubble = document.getElementById('meowBubble');
+
+        cat.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playMeow();
+
+            // Show meow bubble
+            meowBubble.classList.remove('show');
+            void meowBubble.offsetWidth; // Trigger reflow
+            meowBubble.classList.add('show');
+
+            // Remove class after animation
+            setTimeout(() => {
+                meowBubble.classList.remove('show');
+            }, 800);
+        });
+
+        // Capybara click handler
         const capybara = document.querySelector('.capybara-container');
 
-        capybara.addEventListener('click', () => {
+        capybara.addEventListener('click', (e) => {
             // Create burst of hearts on click
             for (let i = 0; i < 5; i++) {
                 const heart = document.createElement('span');
@@ -292,8 +693,8 @@
                     font-size: 2rem;
                     pointer-events: none;
                     z-index: 1000;
-                    left: ${event.clientX + (Math.random() - 0.5) * 100}px;
-                    top: ${event.clientY}px;
+                    left: ${e.clientX + (Math.random() - 0.5) * 100}px;
+                    top: ${e.clientY}px;
                     animation: burstHeart 1s ease-out forwards;
                 `;
                 document.body.appendChild(heart);
@@ -318,11 +719,11 @@
         `;
         document.head.appendChild(style);
 
-        // Random blink variation
-        const eyes = document.querySelectorAll('.eye');
+        // Random blink variation for capybara
+        const capyEyes = document.querySelectorAll('.capybara .eye');
         setInterval(() => {
             if (Math.random() > 0.7) {
-                eyes.forEach(eye => {
+                capyEyes.forEach(eye => {
                     eye.style.transform = 'scaleY(0.1)';
                     setTimeout(() => {
                         eye.style.transform = 'scaleY(1)';
