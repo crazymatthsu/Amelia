@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I love Capy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: #5D4037;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            animation: titleBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes titleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .capybara-container {
+            position: relative;
+            width: 300px;
+            height: 250px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-15px) rotate(2deg); }
+            75% { transform: translateY(-5px) rotate(-2deg); }
+        }
+
+        .capybara {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Body */
+        .body {
+            position: absolute;
+            width: 200px;
+            height: 120px;
+            background: #8B7355;
+            border-radius: 100px 80px 60px 70px;
+            top: 100px;
+            left: 50px;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Head */
+        .head {
+            position: absolute;
+            width: 140px;
+            height: 100px;
+            background: #9C8B75;
+            border-radius: 70px 70px 50px 50px;
+            top: 60px;
+            left: 20px;
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.15);
+        }
+
+        /* Snout */
+        .snout {
+            position: absolute;
+            width: 80px;
+            height: 50px;
+            background: #A69882;
+            border-radius: 40px 40px 30px 30px;
+            top: 100px;
+            left: 10px;
+        }
+
+        /* Nose */
+        .nose {
+            position: absolute;
+            width: 25px;
+            height: 18px;
+            background: #4A3728;
+            border-radius: 50%;
+            top: 105px;
+            left: 35px;
+            animation: noseWiggle 1.5s ease-in-out infinite;
+        }
+
+        @keyframes noseWiggle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Eyes */
+        .eye {
+            position: absolute;
+            width: 20px;
+            height: 22px;
+            background: #2C1810;
+            border-radius: 50%;
+            top: 80px;
+            animation: blink 4s ease-in-out infinite;
+        }
+
+        .eye::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            top: 5px;
+            left: 5px;
+        }
+
+        .eye.left { left: 35px; }
+        .eye.right { left: 75px; }
+
+        @keyframes blink {
+            0%, 45%, 55%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.1); }
+        }
+
+        /* Ears */
+        .ear {
+            position: absolute;
+            width: 30px;
+            height: 25px;
+            background: #8B7355;
+            border-radius: 50% 50% 40% 40%;
+            top: 50px;
+        }
+
+        .ear.left {
+            left: 30px;
+            transform: rotate(-20deg);
+            animation: earWiggle 2s ease-in-out infinite;
+        }
+        .ear.right {
+            left: 100px;
+            transform: rotate(20deg);
+            animation: earWiggle 2s ease-in-out infinite 0.5s;
+        }
+
+        @keyframes earWiggle {
+            0%, 100% { transform: rotate(-20deg); }
+            50% { transform: rotate(-10deg); }
+        }
+
+        .ear.right {
+            animation-name: earWiggleRight;
+        }
+
+        @keyframes earWiggleRight {
+            0%, 100% { transform: rotate(20deg); }
+            50% { transform: rotate(10deg); }
+        }
+
+        /* Legs */
+        .leg {
+            position: absolute;
+            width: 35px;
+            height: 40px;
+            background: #7A6550;
+            border-radius: 15px 15px 20px 20px;
+            top: 195px;
+        }
+
+        .leg.front-left { left: 70px; }
+        .leg.front-right { left: 115px; }
+        .leg.back-left { left: 170px; }
+        .leg.back-right { left: 210px; }
+
+        /* Tail */
+        .tail {
+            position: absolute;
+            width: 20px;
+            height: 15px;
+            background: #6B5A48;
+            border-radius: 50%;
+            top: 180px;
+            left: 240px;
+            animation: tailWag 0.5s ease-in-out infinite;
+        }
+
+        @keyframes tailWag {
+            0%, 100% { transform: rotate(-10deg); }
+            50% { transform: rotate(10deg); }
+        }
+
+        /* Hearts */
+        .hearts {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0;
+            animation: heartFloat 3s ease-in-out infinite;
+        }
+
+        .heart:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .heart:nth-child(2) { left: 30%; animation-delay: 0.5s; }
+        .heart:nth-child(3) { left: 50%; animation-delay: 1s; }
+        .heart:nth-child(4) { left: 70%; animation-delay: 1.5s; }
+        .heart:nth-child(5) { left: 90%; animation-delay: 2s; }
+
+        @keyframes heartFloat {
+            0% {
+                transform: translateY(100px) scale(0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Water/grass decoration */
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(0deg, #228B22 0%, #32CD32 50%, transparent 100%);
+        }
+    </style>
+</head>
+<body>
+    <h1>I love Capy</h1>
+
+    <div class="capybara-container">
+        <div class="capybara">
+            <div class="ear left"></div>
+            <div class="ear right"></div>
+            <div class="head"></div>
+            <div class="snout"></div>
+            <div class="nose"></div>
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+            <div class="body"></div>
+            <div class="tail"></div>
+            <div class="leg front-left"></div>
+            <div class="leg front-right"></div>
+            <div class="leg back-left"></div>
+            <div class="leg back-right"></div>
+        </div>
+        <div class="hearts">
+            <span class="heart">❤️</span>
+            <span class="heart">❤️</span>
+            <span class="heart">❤️</span>
+            <span class="heart">❤️</span>
+            <span class="heart">❤️</span>
+        </div>
+    </div>
+
+    <div class="ground"></div>
+
+    <script>
+        // Add click interaction
+        const capybara = document.querySelector('.capybara-container');
+
+        capybara.addEventListener('click', () => {
+            // Create burst of hearts on click
+            for (let i = 0; i < 5; i++) {
+                const heart = document.createElement('span');
+                heart.textContent = '❤️';
+                heart.style.cssText = `
+                    position: fixed;
+                    font-size: 2rem;
+                    pointer-events: none;
+                    z-index: 1000;
+                    left: ${event.clientX + (Math.random() - 0.5) * 100}px;
+                    top: ${event.clientY}px;
+                    animation: burstHeart 1s ease-out forwards;
+                `;
+                document.body.appendChild(heart);
+
+                setTimeout(() => heart.remove(), 1000);
+            }
+        });
+
+        // Add dynamic keyframe for burst hearts
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes burstHeart {
+                0% {
+                    transform: translateY(0) scale(1);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(-150px) scale(1.5) rotate(${Math.random() * 360}deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Random blink variation
+        const eyes = document.querySelectorAll('.eye');
+        setInterval(() => {
+            if (Math.random() > 0.7) {
+                eyes.forEach(eye => {
+                    eye.style.transform = 'scaleY(0.1)';
+                    setTimeout(() => {
+                        eye.style.transform = 'scaleY(1)';
+                    }, 100);
+                });
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
