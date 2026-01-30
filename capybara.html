@@ -527,6 +527,78 @@
             height: 100px;
             background: linear-gradient(0deg, #228B22 0%, #32CD32 50%, transparent 100%);
         }
+
+        /* ============ MOBILE RESPONSIVE (iPhone) ============ */
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 10px;
+                overflow-y: auto;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+                margin-bottom: 1rem;
+            }
+
+            .animals-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .capybara-container {
+                transform: scale(0.55);
+                transform-origin: center center;
+                margin: -40px 0;
+            }
+
+            .cat-container {
+                transform: scale(0.65);
+                transform-origin: center center;
+                margin: -30px 0;
+            }
+
+            .ground {
+                height: 60px;
+            }
+
+            .heart {
+                font-size: 1rem;
+            }
+
+            .meow-bubble {
+                font-size: 1rem;
+                padding: 6px 12px;
+            }
+        }
+
+        /* Slightly larger phones */
+        @media screen and (min-width: 481px) and (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .animals-container {
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            .capybara-container {
+                transform: scale(0.7);
+                transform-origin: center center;
+                margin: -30px 0;
+            }
+
+            .cat-container {
+                transform: scale(0.8);
+                transform-origin: center center;
+                margin: -20px 0;
+            }
+
+            .ground {
+                height: 80px;
+            }
+        }
     </style>
 </head>
 <body>
