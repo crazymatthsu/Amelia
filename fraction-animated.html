@@ -1,413 +1,416 @@
-import React, { useState, useRef, useEffect } from 'react';
-
-// Helper for nice-looking fractions
-const MathFrac = ({ n, d, color = "text-slate-800", size = "normal" }) => (
-  <span className={`inline-flex flex-col items-center justify-center align-middle mx-1 ${color}`}>
-    <span className={`border-b-2 border-current px-1 leading-tight ${size === "large" ? "text-xl md:text-2xl" : "text-sm md:text-base"}`}>{n}</span>
-    <span className={`leading-tight ${size === "large" ? "text-xl md:text-2xl" : "text-sm md:text-base"}`}>{d}</span>
-  </span>
-);
-
-// Helper for LCM calculation
-const gcd = (a, b) => (!b ? a : gcd(b, a % b));
-const lcm = (a, b) => (a * b) / gcd(a, b);
-
-export default function App() {
-  const [stage, setStage] = useState('setup'); // setup, slicing, mixing, result
-  
-  // Fraction State
-  const [f1, setF1] = useState({ n: 1, d: 2 });
-  const [f2, setF2] = useState({ n: 1, d: 3 });
-  
-  // Slicing State
-  const [slices1, setSlices1] = useState(1);
-  const [slices2, setSlices2] = useState(1);
-  
-  // Mixing State
-  const [pourState, setPourState] = useState('empty'); // empty, pouring, ready_to_mix, mixed
-  const [mixProgress, setMixProgress] = useState(0);
-  const [showHint, setShowHint] = useState(false);
-  const bowlRef = useRef(null);
-
-  // Computed Values
-  const targetPieces = lcm(f1.d, f2.d);
-  const currentTotal1 = f1.d * slices1;
-  const currentTotal2 = f2.d * slices2;
-  const isMatch = currentTotal1 === currentTotal2 && currentTotal1 > 0;
-
-  const reset = () => {
-    setStage('setup');
-    setSlices1(1);
-    setSlices2(1);
-    setPourState('empty');
-    setMixProgress(0);
-    setShowHint(false);
-  };
-
-  // Adjust Fraction 1
-  const updateF1 = (field, delta) => {
-    setF1(prev => {
-      let next = { ...prev };
-      if (field === 'n') next.n = Math.max(1, Math.min(next.d - 1, next.n + delta));
-      if (field === 'd') {
-        next.d = Math.max(2, Math.min(10, next.d + delta));
-        if (next.n >= next.d) next.n = next.d - 1;
-      }
-      return next;
-    });
-  };
-
-  // Adjust Fraction 2
-  const updateF2 = (field, delta) => {
-    setF2(prev => {
-      let next = { ...prev };
-      if (field === 'n') next.n = Math.max(1, Math.min(next.d - 1, next.n + delta));
-      if (field === 'd') {
-        next.d = Math.max(2, Math.min(10, next.d + delta));
-        if (next.n >= next.d) next.n = next.d - 1;
-      }
-      return next;
-    });
-  };
-
-  const checkSlices = () => {
-    if (isMatch) {
-      setStage('mixing');
-    } else {
-      setShowHint(true);
-      setTimeout(() => setShowHint(false), 4000);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fraction Kitchen Lab</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-  };
-
-  // Handle mixing interaction
-  const handleMixMove = (e) => {
-    if (pourState !== 'ready_to_mix') return;
-    setMixProgress(prev => {
-      const newProgress = prev + 1.5;
-      if (newProgress >= 100) {
-        setPourState('mixed');
-        setTimeout(() => setStage('result'), 1000);
-        return 100;
-      }
-      return newProgress;
-    });
-  };
-
-  // Bowl gradient logic
-  const getBowlGradient = () => {
-    if (pourState === 'empty') return 'none';
-    const p = mixProgress;
-    if (p < 50) {
-      return `linear-gradient(${180 + p}deg, #fb923c 40%, #c084fc 60%)`;
-    } else {
-      const blend = (p - 50) * 2;
-      return `linear-gradient(${180 + p * 2}deg, #fb923c ${40 - blend/3}%, #e879f9 ${50}%, #c084fc ${60 + blend/3}%)`;
+    .animate-fade-in {
+      animation: fade-in 0.5s ease-out forwards;
     }
-  };
+    .touch-none {
+      touch-action: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
 
-  return (
-    <div className="min-h-screen bg-amber-50 p-2 md:p-8 font-sans text-slate-800 flex items-center justify-center select-none">
-      <div className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl border-4 md:border-8 border-amber-200 overflow-hidden">
-        
-        {/* Header */}
-        <div className="bg-amber-500 p-4 text-white text-center shadow-md relative overflow-hidden">
-          <div className="relative z-10">
-            <h1 className="text-xl md:text-3xl font-black tracking-tight flex justify-center items-center gap-2">
-              👨‍🍳 FRACTION KITCHEN LAB 👩‍🍳
-            </h1>
-            <p className="text-amber-100 font-medium text-sm md:text-base">
-              Current Recipe: <MathFrac n={f1.n} d={f1.d} color="text-white" /> + <MathFrac n={f2.n} d={f2.d} color="text-white" />
-            </p>
-          </div>
-        </div>
+    // Helper for nice-looking fractions
+    const MathFrac = ({ n, d, color = "text-slate-800", size = "normal" }) => (
+      <span className={`inline-flex flex-col items-center justify-center align-middle mx-1 ${color}`}>
+        <span className={`border-b-2 border-current px-1 leading-tight ${size === "large" ? "text-xl md:text-2xl" : "text-sm md:text-base"}`}>{n}</span>
+        <span className={`leading-tight ${size === "large" ? "text-xl md:text-2xl" : "text-sm md:text-base"}`}>{d}</span>
+      </span>
+    );
 
-        <div className="p-4 md:p-8 min-h-[450px] flex flex-col justify-center transition-all duration-500">
-          
-          {/* STAGE: SETUP */}
-          {stage === 'setup' && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-amber-700">Create Your Recipe!</h2>
-                <p className="text-slate-500">Choose two ingredients to mix. (Must be less than 1 whole)</p>
-              </div>
+    // Helper for LCM calculation
+    const gcd = (a, b) => (!b ? a : gcd(b, a % b));
+    const lcm = (a, b) => (a * b) / gcd(a, b);
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Ingredient 1 Control */}
-                <div className="bg-orange-50 p-6 rounded-2xl border-2 border-orange-200 flex flex-col items-center">
-                  <h3 className="font-bold text-orange-600 mb-4">Orange Bar</h3>
-                  <div className="flex items-center gap-4">
-                    <div className="flex flex-col gap-2 items-end">
-                      <label className="text-xs font-bold text-slate-400">TOP</label>
-                      <label className="text-xs font-bold text-slate-400">BOTTOM</label>
-                    </div>
-                    <MathFrac n={f1.n} d={f1.d} size="large" color="text-orange-600" />
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-1">
-                         <button onClick={() => updateF1('n', -1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">-</button>
-                         <button onClick={() => updateF1('n', 1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">+</button>
-                      </div>
-                      <div className="flex gap-1">
-                         <button onClick={() => updateF1('d', -1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">-</button>
-                         <button onClick={() => updateF1('d', 1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">+</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+    function App() {
+      const [stage, setStage] = useState('setup');
+      const [f1, setF1] = useState({ n: 1, d: 2 });
+      const [f2, setF2] = useState({ n: 1, d: 3 });
+      const [slices1, setSlices1] = useState(1);
+      const [slices2, setSlices2] = useState(1);
+      const [pourState, setPourState] = useState('empty');
+      const [mixProgress, setMixProgress] = useState(0);
+      const [showHint, setShowHint] = useState(false);
+      const bowlRef = useRef(null);
 
-                {/* Ingredient 2 Control */}
-                <div className="bg-purple-50 p-6 rounded-2xl border-2 border-purple-200 flex flex-col items-center">
-                  <h3 className="font-bold text-purple-600 mb-4">Grape Bar</h3>
-                  <div className="flex items-center gap-4">
-                    <div className="flex flex-col gap-2 items-end">
-                      <label className="text-xs font-bold text-slate-400">TOP</label>
-                      <label className="text-xs font-bold text-slate-400">BOTTOM</label>
-                    </div>
-                    <MathFrac n={f2.n} d={f2.d} size="large" color="text-purple-600" />
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-1">
-                         <button onClick={() => updateF2('n', -1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">-</button>
-                         <button onClick={() => updateF2('n', 1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">+</button>
-                      </div>
-                      <div className="flex gap-1">
-                         <button onClick={() => updateF2('d', -1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">-</button>
-                         <button onClick={() => updateF2('d', 1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">+</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      const targetPieces = lcm(f1.d, f2.d);
+      const currentTotal1 = f1.d * slices1;
+      const currentTotal2 = f2.d * slices2;
+      const isMatch = currentTotal1 === currentTotal2 && currentTotal1 > 0;
 
-              <div className="flex justify-center pt-4">
-                <button 
-                  onClick={() => setStage('slicing')}
-                  className="bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-4 px-12 rounded-2xl shadow-lg transition-transform active:scale-95"
-                >
-                  Start Cooking! 🔪
-                </button>
+      const reset = () => {
+        setStage('setup');
+        setSlices1(1);
+        setSlices2(1);
+        setPourState('empty');
+        setMixProgress(0);
+        setShowHint(false);
+      };
+
+      const updateF1 = (field, delta) => {
+        setF1(prev => {
+          let next = { ...prev };
+          if (field === 'n') next.n = Math.max(1, Math.min(next.d - 1, next.n + delta));
+          if (field === 'd') {
+            next.d = Math.max(2, Math.min(10, next.d + delta));
+            if (next.n >= next.d) next.n = next.d - 1;
+          }
+          return next;
+        });
+      };
+
+      const updateF2 = (field, delta) => {
+        setF2(prev => {
+          let next = { ...prev };
+          if (field === 'n') next.n = Math.max(1, Math.min(next.d - 1, next.n + delta));
+          if (field === 'd') {
+            next.d = Math.max(2, Math.min(10, next.d + delta));
+            if (next.n >= next.d) next.n = next.d - 1;
+          }
+          return next;
+        });
+      };
+
+      const checkSlices = () => {
+        if (isMatch) {
+          setStage('mixing');
+        } else {
+          setShowHint(true);
+          setTimeout(() => setShowHint(false), 4000);
+        }
+      };
+
+      const handleMixMove = (e) => {
+        if (pourState !== 'ready_to_mix') return;
+        setMixProgress(prev => {
+          const newProgress = prev + 1.5;
+          if (newProgress >= 100) {
+            setPourState('mixed');
+            setTimeout(() => setStage('result'), 1000);
+            return 100;
+          }
+          return newProgress;
+        });
+      };
+
+      const getBowlGradient = () => {
+        if (pourState === 'empty') return 'none';
+        const p = mixProgress;
+        if (p < 50) {
+          return `linear-gradient(${180 + p}deg, #fb923c 40%, #c084fc 60%)`;
+        } else {
+          const blend = (p - 50) * 2;
+          return `linear-gradient(${180 + p * 2}deg, #fb923c ${40 - blend/3}%, #e879f9 ${50}%, #c084fc ${60 + blend/3}%)`;
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-amber-50 p-2 md:p-8 font-sans text-slate-800 flex items-center justify-center select-none">
+          <div className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl border-4 md:border-8 border-amber-200 overflow-hidden">
+
+            {/* Header */}
+            <div className="bg-amber-500 p-4 text-white text-center shadow-md relative overflow-hidden">
+              <div className="relative z-10">
+                <h1 className="text-xl md:text-3xl font-black tracking-tight flex justify-center items-center gap-2">
+                  &#x1F468;&#x200D;&#x1F373; FRACTION KITCHEN LAB &#x1F469;&#x200D;&#x1F373;
+                </h1>
+                <p className="text-amber-100 font-medium text-sm md:text-base">
+                  Current Recipe: <MathFrac n={f1.n} d={f1.d} color="text-white" /> + <MathFrac n={f2.n} d={f2.d} color="text-white" />
+                </p>
               </div>
             </div>
-          )}
 
-          {/* STAGE: SLICING */}
-          {stage === 'slicing' && (
-            <div className="space-y-8 animate-fade-in">
-              <div className="text-center">
-                <h2 className="text-xl font-bold mb-1">Make the pieces match!</h2>
-                <p className="text-slate-500 text-sm">Goal: Get the same number of pieces in both bars.</p>
-              </div>
+            <div className="p-4 md:p-8 min-h-[450px] flex flex-col justify-center transition-all duration-500">
 
-              {/* Bar 1 */}
-              <div className="bg-orange-50 p-3 md:p-4 rounded-2xl border-2 border-orange-100">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="font-bold text-orange-600 text-sm md:text-lg flex items-center">
-                    Orange: <MathFrac n={f1.n * slices1} d={f1.d * slices1} color="text-orange-600" />
-                  </span>
-                  <div className="flex gap-2">
-                    <button onClick={() => setSlices1(Math.max(1, slices1 - 1))} className="bg-white border-2 border-orange-300 w-8 h-8 rounded-lg font-bold shadow-sm active:bg-orange-100">-</button>
-                    <button onClick={() => setSlices1(Math.min(20, slices1 + 1))} className="bg-white border-2 border-orange-300 w-8 h-8 rounded-lg font-bold shadow-sm active:bg-orange-100">+</button>
+              {/* STAGE: SETUP */}
+              {stage === 'setup' && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="text-center mb-6">
+                    <h2 className="text-2xl font-bold text-amber-700">Create Your Recipe!</h2>
+                    <p className="text-slate-500">Choose two ingredients to mix. (Must be less than 1 whole)</p>
                   </div>
-                </div>
-                <div className="h-12 w-full flex border-2 border-slate-700 bg-white rounded-md overflow-hidden">
-                  {[...Array(f1.d * slices1)].map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`flex-1 border-r border-slate-300 ${i < (f1.n * slices1) ? 'bg-orange-400' : 'bg-white'}`}
-                      style={{ borderColor: 'rgba(203, 213, 225, 0.5)' }}
-                    />
-                  ))}
-                </div>
-                <div className="text-center mt-2 text-xs font-bold text-slate-400 uppercase tracking-widest">{f1.d * slices1} pieces</div>
-              </div>
 
-              {/* Bar 2 */}
-              <div className="bg-purple-50 p-3 md:p-4 rounded-2xl border-2 border-purple-100">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="font-bold text-purple-600 text-sm md:text-lg flex items-center">
-                    Grape: <MathFrac n={f2.n * slices2} d={f2.d * slices2} color="text-purple-600" />
-                  </span>
-                  <div className="flex gap-2">
-                    <button onClick={() => setSlices2(Math.max(1, slices2 - 1))} className="bg-white border-2 border-purple-300 w-8 h-8 rounded-lg font-bold shadow-sm active:bg-purple-100">-</button>
-                    <button onClick={() => setSlices2(Math.min(20, slices2 + 1))} className="bg-white border-2 border-purple-300 w-8 h-8 rounded-lg font-bold shadow-sm active:bg-purple-100">+</button>
-                  </div>
-                </div>
-                <div className="h-12 w-full flex border-2 border-slate-700 bg-white rounded-md overflow-hidden">
-                  {[...Array(f2.d * slices2)].map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`flex-1 border-r border-slate-300 ${i < (f2.n * slices2) ? 'bg-purple-400' : 'bg-white'}`}
-                      style={{ borderColor: 'rgba(203, 213, 225, 0.5)' }}
-                    />
-                  ))}
-                </div>
-                <div className="text-center mt-2 text-xs font-bold text-slate-400 uppercase tracking-widest">{f2.d * slices2} pieces</div>
-              </div>
-
-              {showHint && (
-                <div className="bg-blue-100 text-blue-700 p-3 rounded-xl text-center font-bold text-sm animate-pulse">
-                  💡 Chef's Hint: Try to get {targetPieces} pieces in both bars! 
-                  <br/><span className="text-xs font-normal">(Multiples of {f1.d} and {f2.d} meet at {targetPieces})</span>
-                </div>
-              )}
-
-              <button 
-                onClick={checkSlices}
-                className={`w-full text-white text-lg font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95 ${isMatch ? 'bg-green-500 hover:bg-green-600 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'}`}
-              >
-                {isMatch ? 'Ready to Mix! ✨' : 'Check My Work'}
-              </button>
-            </div>
-          )}
-
-          {/* STAGE: MIXING */}
-          {stage === 'mixing' && (
-            <div className="text-center space-y-6 animate-fade-in flex flex-col items-center">
-              
-              {pourState === 'empty' && (
-                 <>
-                  <h2 className="text-3xl font-black text-green-600">PERFECT MATCH!</h2>
-                  <p className="text-lg">Both bars are cut into {currentTotal1} pieces. Ready?</p>
-                 </>
-              )}
-              {pourState === 'ready_to_mix' && (
-                <div className="animate-pulse">
-                  <h2 className="text-3xl font-black text-purple-600">MIX IT UP!</h2>
-                  <p className="text-lg text-slate-600">Rub the bowl to mix!</p>
-                </div>
-              )}
-              {pourState === 'mixed' && (
-                 <h2 className="text-3xl font-black text-orange-600">GREAT JOB!</h2>
-              )}
-
-              <div className="relative mt-4">
-                <div 
-                  ref={bowlRef}
-                  className="w-64 h-32 border-b-8 border-x-8 border-slate-300 rounded-b-full relative overflow-hidden bg-slate-100 shadow-inner cursor-pointer touch-none"
-                  onMouseMove={handleMixMove}
-                  onTouchMove={handleMixMove}
-                >
-                  <div 
-                    className="absolute bottom-0 w-full transition-all duration-300"
-                    style={{
-                      height: pourState === 'empty' ? '0%' : '85%',
-                      background: getBowlGradient(),
-                      opacity: 0.9,
-                      transform: pourState === 'ready_to_mix' ? `rotate(${mixProgress * 3}deg) scale(${1 + (mixProgress/500)})` : 'none',
-                      transition: pourState === 'pouring' ? 'height 2s ease-out' : 'transform 0.1s linear'
-                    }}
-                  >
-                     {pourState === 'ready_to_mix' && mixProgress > 5 && (
-                        <div className="absolute inset-0 opacity-50 mix-blend-overlay">
-                           <div className="w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent animate-spin-slow"></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-orange-50 p-6 rounded-2xl border-2 border-orange-200 flex flex-col items-center">
+                      <h3 className="font-bold text-orange-600 mb-4">Orange Bar</h3>
+                      <div className="flex items-center gap-4">
+                        <div className="flex flex-col gap-2 items-end">
+                          <label className="text-xs font-bold text-slate-400">TOP</label>
+                          <label className="text-xs font-bold text-slate-400">BOTTOM</label>
                         </div>
-                     )}
+                        <MathFrac n={f1.n} d={f1.d} size="large" color="text-orange-600" />
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-1">
+                            <button onClick={() => updateF1('n', -1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">-</button>
+                            <button onClick={() => updateF1('n', 1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">+</button>
+                          </div>
+                          <div className="flex gap-1">
+                            <button onClick={() => updateF1('d', -1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">-</button>
+                            <button onClick={() => updateF1('d', 1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">+</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-purple-50 p-6 rounded-2xl border-2 border-purple-200 flex flex-col items-center">
+                      <h3 className="font-bold text-purple-600 mb-4">Grape Bar</h3>
+                      <div className="flex items-center gap-4">
+                        <div className="flex flex-col gap-2 items-end">
+                          <label className="text-xs font-bold text-slate-400">TOP</label>
+                          <label className="text-xs font-bold text-slate-400">BOTTOM</label>
+                        </div>
+                        <MathFrac n={f2.n} d={f2.d} size="large" color="text-purple-600" />
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-1">
+                            <button onClick={() => updateF2('n', -1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">-</button>
+                            <button onClick={() => updateF2('n', 1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">+</button>
+                          </div>
+                          <div className="flex gap-1">
+                            <button onClick={() => updateF2('d', -1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">-</button>
+                            <button onClick={() => updateF2('d', 1)} className="w-8 h-8 bg-white border border-slate-300 rounded font-bold hover:bg-slate-50">+</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  
-                  {pourState === 'ready_to_mix' && mixProgress < 10 && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-bounce">
-                      <span className="text-4xl filter drop-shadow-lg">👆</span>
+
+                  <div className="flex justify-center pt-4">
+                    <button
+                      onClick={() => setStage('slicing')}
+                      className="bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-4 px-12 rounded-2xl shadow-lg transition-transform active:scale-95"
+                    >
+                      Start Cooking! &#x1F52A;
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STAGE: SLICING */}
+              {stage === 'slicing' && (
+                <div className="space-y-8 animate-fade-in">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold mb-1">Make the pieces match!</h2>
+                    <p className="text-slate-500 text-sm">Goal: Get the same number of pieces in both bars.</p>
+                  </div>
+
+                  <div className="bg-orange-50 p-3 md:p-4 rounded-2xl border-2 border-orange-100">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="font-bold text-orange-600 text-sm md:text-lg flex items-center">
+                        Orange: <MathFrac n={f1.n * slices1} d={f1.d * slices1} color="text-orange-600" />
+                      </span>
+                      <div className="flex gap-2">
+                        <button onClick={() => setSlices1(Math.max(1, slices1 - 1))} className="bg-white border-2 border-orange-300 w-8 h-8 rounded-lg font-bold shadow-sm active:bg-orange-100">-</button>
+                        <button onClick={() => setSlices1(Math.min(20, slices1 + 1))} className="bg-white border-2 border-orange-300 w-8 h-8 rounded-lg font-bold shadow-sm active:bg-orange-100">+</button>
+                      </div>
+                    </div>
+                    <div className="h-12 w-full flex border-2 border-slate-700 bg-white rounded-md overflow-hidden">
+                      {[...Array(f1.d * slices1)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`flex-1 border-r border-slate-300 ${i < (f1.n * slices1) ? 'bg-orange-400' : 'bg-white'}`}
+                          style={{ borderColor: 'rgba(203, 213, 225, 0.5)' }}
+                        />
+                      ))}
+                    </div>
+                    <div className="text-center mt-2 text-xs font-bold text-slate-400 uppercase tracking-widest">{f1.d * slices1} pieces</div>
+                  </div>
+
+                  <div className="bg-purple-50 p-3 md:p-4 rounded-2xl border-2 border-purple-100">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="font-bold text-purple-600 text-sm md:text-lg flex items-center">
+                        Grape: <MathFrac n={f2.n * slices2} d={f2.d * slices2} color="text-purple-600" />
+                      </span>
+                      <div className="flex gap-2">
+                        <button onClick={() => setSlices2(Math.max(1, slices2 - 1))} className="bg-white border-2 border-purple-300 w-8 h-8 rounded-lg font-bold shadow-sm active:bg-purple-100">-</button>
+                        <button onClick={() => setSlices2(Math.min(20, slices2 + 1))} className="bg-white border-2 border-purple-300 w-8 h-8 rounded-lg font-bold shadow-sm active:bg-purple-100">+</button>
+                      </div>
+                    </div>
+                    <div className="h-12 w-full flex border-2 border-slate-700 bg-white rounded-md overflow-hidden">
+                      {[...Array(f2.d * slices2)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`flex-1 border-r border-slate-300 ${i < (f2.n * slices2) ? 'bg-purple-400' : 'bg-white'}`}
+                          style={{ borderColor: 'rgba(203, 213, 225, 0.5)' }}
+                        />
+                      ))}
+                    </div>
+                    <div className="text-center mt-2 text-xs font-bold text-slate-400 uppercase tracking-widest">{f2.d * slices2} pieces</div>
+                  </div>
+
+                  {showHint && (
+                    <div className="bg-blue-100 text-blue-700 p-3 rounded-xl text-center font-bold text-sm animate-pulse">
+                      &#x1F4A1; Chef's Hint: Try to get {targetPieces} pieces in both bars!
+                      <br/><span className="text-xs font-normal">(Multiples of {f1.d} and {f2.d} meet at {targetPieces})</span>
                     </div>
                   )}
-                </div>
 
-                {pourState === 'ready_to_mix' && (
-                  <div className="w-64 mt-4 h-4 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
-                    <div 
-                      className="h-full bg-gradient-to-r from-orange-400 to-purple-500 transition-all duration-100"
-                      style={{ width: `${mixProgress}%` }}
-                    ></div>
-                  </div>
-                )}
-              </div>
-              
-              {pourState === 'empty' && (
-                <button 
-                  onClick={() => {
-                    setPourState('pouring');
-                    setTimeout(() => setPourState('ready_to_mix'), 2000);
-                  }}
-                  className="mt-8 bg-orange-500 hover:bg-orange-600 text-white text-xl font-bold py-3 px-10 rounded-full shadow-lg animate-pulse"
-                >
-                  POUR INGREDIENTS! 🥣
-                </button>
+                  <button
+                    onClick={checkSlices}
+                    className={`w-full text-white text-lg font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95 ${isMatch ? 'bg-green-500 hover:bg-green-600 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  >
+                    {isMatch ? 'Ready to Mix! ✨' : 'Check My Work'}
+                  </button>
+                </div>
               )}
-            </div>
-          )}
 
-          {/* STAGE: RESULT */}
-          {stage === 'result' && (() => {
-            const finalNum = (f1.n * slices1) + (f2.n * slices2);
-            const finalDenom = f1.d * slices1; // Common Denom
-            const whole = Math.floor(finalNum / finalDenom);
-            const rem = finalNum % finalDenom;
-            
-            return (
-              <div className="text-center space-y-6 animate-fade-in">
-                <h2 className="text-3xl font-black text-amber-600">Recipe Complete!</h2>
-                
-                <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-200">
-                  <div className="flex items-center justify-center gap-4 text-lg md:text-xl font-bold">
-                     <div className="text-orange-500">{f1.n * slices1} pieces</div>
-                     <div className="text-slate-400">+</div>
-                     <div className="text-purple-500">{f2.n * slices2} pieces</div>
+              {/* STAGE: MIXING */}
+              {stage === 'mixing' && (
+                <div className="text-center space-y-6 animate-fade-in flex flex-col items-center">
+
+                  {pourState === 'empty' && (
+                    <>
+                      <h2 className="text-3xl font-black text-green-600">PERFECT MATCH!</h2>
+                      <p className="text-lg">Both bars are cut into {currentTotal1} pieces. Ready?</p>
+                    </>
+                  )}
+                  {pourState === 'ready_to_mix' && (
+                    <div className="animate-pulse">
+                      <h2 className="text-3xl font-black text-purple-600">MIX IT UP!</h2>
+                      <p className="text-lg text-slate-600">Rub the bowl to mix!</p>
+                    </div>
+                  )}
+                  {pourState === 'mixed' && (
+                    <h2 className="text-3xl font-black text-orange-600">GREAT JOB!</h2>
+                  )}
+
+                  <div className="relative mt-4">
+                    <div
+                      ref={bowlRef}
+                      className="w-64 h-32 border-b-8 border-x-8 border-slate-300 rounded-b-full relative overflow-hidden bg-slate-100 shadow-inner cursor-pointer touch-none"
+                      onMouseMove={handleMixMove}
+                      onTouchMove={handleMixMove}
+                    >
+                      <div
+                        className="absolute bottom-0 w-full transition-all duration-300"
+                        style={{
+                          height: pourState === 'empty' ? '0%' : '85%',
+                          background: getBowlGradient(),
+                          opacity: 0.9,
+                          transform: pourState === 'ready_to_mix' ? `rotate(${mixProgress * 3}deg) scale(${1 + (mixProgress/500)})` : 'none',
+                          transition: pourState === 'pouring' ? 'height 2s ease-out' : 'transform 0.1s linear'
+                        }}
+                      >
+                        {pourState === 'ready_to_mix' && mixProgress > 5 && (
+                          <div className="absolute inset-0 opacity-50 mix-blend-overlay">
+                            <div className="w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent animate-spin"></div>
+                          </div>
+                        )}
+                      </div>
+
+                      {pourState === 'ready_to_mix' && mixProgress < 10 && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-bounce">
+                          <span className="text-4xl filter drop-shadow-lg">&#x1F446;</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {pourState === 'ready_to_mix' && (
+                      <div className="w-64 mt-4 h-4 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+                        <div
+                          className="h-full bg-gradient-to-r from-orange-400 to-purple-500 transition-all duration-100"
+                          style={{ width: `${mixProgress}%` }}
+                        ></div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-3xl md:text-4xl font-black text-slate-800 my-4">= {finalNum} pieces!</div>
-                  <div className="text-xl font-medium text-slate-500">
-                    That's <MathFrac n={finalNum} d={finalDenom} /> of a bar.
-                  </div>
+
+                  {pourState === 'empty' && (
+                    <button
+                      onClick={() => {
+                        setPourState('pouring');
+                        setTimeout(() => setPourState('ready_to_mix'), 2000);
+                      }}
+                      className="mt-8 bg-orange-500 hover:bg-orange-600 text-white text-xl font-bold py-3 px-10 rounded-full shadow-lg animate-pulse"
+                    >
+                      POUR INGREDIENTS! &#x1F963;
+                    </button>
+                  )}
                 </div>
+              )}
 
-                {whole > 0 ? (
-                  <div className="bg-green-50 p-4 rounded-2xl border-2 border-green-200">
-                    <p className="text-base md:text-lg font-bold text-green-800">Since {finalDenom} pieces make 1 whole bar...</p>
-                    <div className="text-2xl md:text-3xl font-black text-green-700 mt-2">
-                      Answer: {whole} {rem > 0 && <MathFrac n={rem} d={finalDenom} />}
+              {/* STAGE: RESULT */}
+              {stage === 'result' && (() => {
+                const finalNum = (f1.n * slices1) + (f2.n * slices2);
+                const finalDenom = f1.d * slices1;
+                const whole = Math.floor(finalNum / finalDenom);
+                const rem = finalNum % finalDenom;
+
+                return (
+                  <div className="text-center space-y-6 animate-fade-in">
+                    <h2 className="text-3xl font-black text-amber-600">Recipe Complete!</h2>
+
+                    <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-200">
+                      <div className="flex items-center justify-center gap-4 text-lg md:text-xl font-bold">
+                        <div className="text-orange-500">{f1.n * slices1} pieces</div>
+                        <div className="text-slate-400">+</div>
+                        <div className="text-purple-500">{f2.n * slices2} pieces</div>
+                      </div>
+                      <div className="text-3xl md:text-4xl font-black text-slate-800 my-4">= {finalNum} pieces!</div>
+                      <div className="text-xl font-medium text-slate-500">
+                        That's <MathFrac n={finalNum} d={finalDenom} /> of a bar.
+                      </div>
                     </div>
+
+                    {whole > 0 ? (
+                      <div className="bg-green-50 p-4 rounded-2xl border-2 border-green-200">
+                        <p className="text-base md:text-lg font-bold text-green-800">Since {finalDenom} pieces make 1 whole bar...</p>
+                        <div className="text-2xl md:text-3xl font-black text-green-700 mt-2">
+                          Answer: {whole} {rem > 0 && <MathFrac n={rem} d={finalDenom} />}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-green-50 p-4 rounded-2xl border-2 border-green-200">
+                        <p className="text-base md:text-lg font-bold text-green-800">Simple Fraction:</p>
+                        <div className="text-2xl md:text-3xl font-black text-green-700 mt-2">
+                          Answer: <MathFrac n={finalNum} d={finalDenom} />
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={reset}
+                      className="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-8 rounded-xl"
+                    >
+                      Create New Recipe &#x1F504;
+                    </button>
                   </div>
-                ) : (
-                   <div className="bg-green-50 p-4 rounded-2xl border-2 border-green-200">
-                    <p className="text-base md:text-lg font-bold text-green-800">Simple Fraction:</p>
-                    <div className="text-2xl md:text-3xl font-black text-green-700 mt-2">
-                      Answer: <MathFrac n={finalNum} d={finalDenom} />
-                    </div>
-                  </div>
-                )}
+                );
+              })()}
 
-                <button 
-                  onClick={reset}
-                  className="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-8 rounded-xl"
-                >
-                  Create New Recipe 🔄
-                </button>
-              </div>
-            );
-          })()}
+            </div>
 
+            {/* Footer Progress */}
+            <div className="h-2 bg-slate-100 w-full">
+              <div
+                className="h-full bg-amber-400 transition-all duration-500"
+                style={{
+                  width: stage === 'setup' ? '10%' : stage === 'slicing' ? '40%' : stage === 'mixing' ? '70%' : '100%'
+                }}
+              ></div>
+            </div>
+          </div>
         </div>
+      );
+    }
 
-        {/* Footer Progress */}
-        <div className="h-2 bg-slate-100 w-full">
-           <div 
-             className="h-full bg-amber-400 transition-all duration-500" 
-             style={{ 
-               width: stage === 'setup' ? '10%' : stage === 'slicing' ? '40%' : stage === 'mixing' ? '70%' : '100%' 
-             }}
-           ></div>
-        </div>
-      </div>
-      
-      <style>{`
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fade-in 0.5s ease-out forwards;
-        }
-        .touch-none {
-            touch-action: none;
-        }
-      `}</style>
-    </div>
-  );
-}
-
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
