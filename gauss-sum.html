@@ -118,14 +118,58 @@
     overflow: hidden;
   }
 
+  /* Number cards container (relative for SVG overlay) */
+  .number-container {
+    position: relative;
+    width: 100%;
+    padding-top: 60px; /* space for arcs above the cards */
+  }
+
   /* Number cards row */
   .number-row {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
     justify-content: center;
     min-height: 60px;
     width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* SVG arcs overlay */
+  .arcs-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    overflow: visible;
+  }
+
+  .arc-line {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .arc-line.visible {
+    opacity: 1;
+    stroke-dasharray: 500;
+    stroke-dashoffset: 500;
+    animation: drawArc 0.6s ease-out forwards;
+  }
+
+  .arc-line.faded {
+    opacity: 0.2;
+  }
+
+  @keyframes drawArc {
+    to { stroke-dashoffset: 0; }
   }
 
   .num-card {
@@ -324,7 +368,10 @@
 
 <div class="stage" id="stage">
   <div class="message-box" id="message">Press <b>Next Step</b> or <b>Auto Play</b> to begin!</div>
-  <div class="number-row" id="numberRow"></div>
+  <div class="number-container" id="numberContainer">
+    <svg class="arcs-svg" id="arcsSvg"></svg>
+    <div class="number-row" id="numberRow"></div>
+  </div>
   <div class="pairs-area" id="pairsArea"></div>
 </div>
 
@@ -354,12 +401,17 @@ const rangeVal = document.getElementById('rangeVal');
 const btnStep = document.getElementById('btnStep');
 const btnPlay = document.getElementById('btnPlay');
 const btnReset = document.getElementById('btnReset');
+const numberContainer = document.getElementById('numberContainer');
 const numberRow = document.getElementById('numberRow');
+const arcsSvg = document.getElementById('arcsSvg');
 const pairsArea = document.getElementById('pairsArea');
 const message = document.getElementById('message');
 const promptText = document.getElementById('promptText');
 const copyBtn = document.getElementById('copyBtn');
 const confettiEl = document.getElementById('confetti');
+
+// Store drawn arc elements by pair index
+let drawnArcs = [];
 
 function getColor(i) { return COLORS[i % COLORS.length]; }
 
@@ -375,6 +427,8 @@ function reset() {
   N = parseInt(rangeSlider.value);
   totalSteps = calcTotalSteps();
   numberRow.innerHTML = '';
+  arcsSvg.innerHTML = '';
+  drawnArcs = [];
   pairsArea.innerHTML = '';
   message.innerHTML = 'Press <b>Next Step</b> or <b>Auto Play</b> to begin!';
   message.className = 'message-box';
@@ -401,6 +455,72 @@ function buildNumberCards() {
   }
 }
 
+function drawArc(pairIndex, highlight) {
+  const a = pairIndex + 1;
+  const b = N - pairIndex;
+  const cardA = document.getElementById('card-' + a);
+  const cardB = document.getElementById('card-' + b);
+  if (!cardA || !cardB) return;
+
+  const containerRect = numberContainer.getBoundingClientRect();
+  const rectA = cardA.getBoundingClientRect();
+  const rectB = cardB.getBoundingClientRect();
+
+  // Center-top of each card (arc goes above)
+  const x1 = rectA.left + rectA.width / 2 - containerRect.left;
+  const y1 = rectA.top - containerRect.top;
+  const x2 = rectB.left + rectB.width / 2 - containerRect.left;
+  const y2 = rectB.top - containerRect.top;
+
+  // Arc height based on distance between cards
+  const dist = Math.abs(x2 - x1);
+  const arcHeight = Math.max(30, dist * 0.35);
+
+  const midX = (x1 + x2) / 2;
+  const midY = Math.min(y1, y2) - arcHeight;
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', `M ${x1} ${y1} Q ${midX} ${midY} ${x2} ${y2}`);
+
+  // Blend color of the two cards
+  const color = getColor(pairIndex);
+  path.setAttribute('stroke', color);
+  path.setAttribute('class', 'arc-line' + (highlight ? ' visible' : ' visible faded'));
+  path.dataset.pairIndex = pairIndex;
+
+  arcsSvg.appendChild(path);
+  drawnArcs.push(path);
+
+  // Add a sum label at the top of the arc
+  if (highlight) {
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', midX);
+    label.setAttribute('y', midY - 6);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('font-size', '14');
+    label.setAttribute('font-weight', '800');
+    label.setAttribute('fill', color);
+    label.setAttribute('class', 'arc-line visible');
+    label.dataset.pairIndex = pairIndex;
+    label.textContent = `= ${a + b}`;
+    arcsSvg.appendChild(label);
+    drawnArcs.push(label);
+  }
+}
+
+function updateArcStates(currentPairIndex) {
+  // Fade old arcs, keep current one bright
+  drawnArcs.forEach(el => {
+    const idx = parseInt(el.dataset.pairIndex);
+    if (idx === currentPairIndex) {
+      el.classList.remove('faded');
+      el.classList.add('visible');
+    } else {
+      el.classList.add('faded');
+    }
+  });
+}
+
 function highlightPair(pairIndex) {
   const a = pairIndex + 1;
   const b = N - pairIndex;
@@ -410,7 +530,6 @@ function highlightPair(pairIndex) {
   for (let i = 1; i <= N; i++) {
     const card = document.getElementById('card-' + i);
     if (!card) continue;
-    // Already paired ones stay paired
     const alreadyPaired = getPairedIndices(pairIndex);
     if (i === a || i === b) {
       card.className = 'num-card highlight';
@@ -420,6 +539,12 @@ function highlightPair(pairIndex) {
       card.className = 'num-card dimmed';
     }
   }
+
+  // Draw arc connecting the pair
+  // First fade all existing arcs
+  updateArcStates(pairIndex);
+  // Draw the new arc
+  drawArc(pairIndex, true);
 
   // Add pair to pairs area
   const pairSum = a + b;
@@ -454,6 +579,11 @@ function showCountPairs() {
     const card = document.getElementById('card-' + i);
     if (card) card.className = 'num-card paired';
   }
+  // Show all arcs equally (un-fade them all)
+  drawnArcs.forEach(el => {
+    el.classList.remove('faded');
+    el.classList.add('visible');
+  });
   message.innerHTML = `We made <b>${pairs} pairs</b>, and each pair equals <b>${pairSum}</b>!`;
   message.className = 'message-box celebrate';
 }
