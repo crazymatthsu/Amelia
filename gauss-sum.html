@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magic Number Pairing!</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0f4ff;
+    --card-colors: #ff6b6b, #ffa94d, #ffd43b, #69db7c, #38d9a9,
+                   #4dabf7, #748ffc, #9775fa, #e599f7, #f06595;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    overflow-x: hidden;
+  }
+
+  h1 {
+    font-size: clamp(1.5rem, 5vw, 2.4rem);
+    color: #364fc7;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    color: #868e96;
+    font-size: clamp(0.85rem, 2.5vw, 1.05rem);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  /* Controls bar */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 18px;
+    background: #fff;
+    padding: 12px 18px;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    max-width: 700px;
+    width: 100%;
+  }
+
+  .controls label {
+    font-weight: 700;
+    color: #495057;
+    font-size: 0.95rem;
+  }
+
+  .controls input[type="range"] {
+    width: 100px;
+    accent-color: #748ffc;
+  }
+
+  .range-val {
+    background: #748ffc;
+    color: #fff;
+    font-weight: 800;
+    border-radius: 8px;
+    padding: 2px 10px;
+    font-size: 1rem;
+    min-width: 32px;
+    text-align: center;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 8px 18px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  }
+  .btn:active { transform: scale(0.95); }
+
+  .btn-step {
+    background: linear-gradient(135deg, #748ffc, #4c6ef5);
+    color: #fff;
+  }
+  .btn-play {
+    background: linear-gradient(135deg, #69db7c, #40c057);
+    color: #fff;
+  }
+  .btn-reset {
+    background: linear-gradient(135deg, #ffa94d, #fd7e14);
+    color: #fff;
+  }
+
+  /* Stage area */
+  .stage {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    min-height: 340px;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    overflow: hidden;
+  }
+
+  /* Number cards row */
+  .number-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    min-height: 60px;
+    width: 100%;
+  }
+
+  .num-card {
+    width: clamp(36px, 8vw, 54px);
+    height: clamp(36px, 8vw, 54px);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    transition: transform 0.5s cubic-bezier(.4,0,.2,1),
+                opacity 0.4s,
+                box-shadow 0.3s;
+    position: relative;
+    user-select: none;
+  }
+
+  .num-card.paired {
+    transform: scale(0.9);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+
+  .num-card.highlight {
+    transform: scale(1.2);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    z-index: 10;
+  }
+
+  .num-card.dimmed {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+
+  /* Pair display area */
+  .pairs-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    min-height: 50px;
+    width: 100%;
+  }
+
+  .pair-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(116,143,252,0.08);
+    border-radius: 14px;
+    padding: 6px 12px;
+    animation: popIn 0.4s cubic-bezier(.4,0,.2,1) forwards;
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  @keyframes popIn {
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .pair-group .pair-num {
+    font-weight: 800;
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    padding: 4px 8px;
+    border-radius: 8px;
+    color: #fff;
+    min-width: 32px;
+    text-align: center;
+  }
+
+  .pair-group .pair-plus {
+    font-weight: 800;
+    color: #495057;
+    font-size: 1.1rem;
+  }
+
+  .pair-group .pair-eq {
+    font-weight: 900;
+    color: #364fc7;
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    margin-left: 4px;
+  }
+
+  /* Message / explanation box */
+  .message-box {
+    text-align: center;
+    font-size: clamp(1rem, 3vw, 1.35rem);
+    font-weight: 700;
+    color: #364fc7;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    line-height: 1.4;
+  }
+
+  .message-box .big {
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+    display: block;
+    margin-top: 4px;
+  }
+
+  .message-box .formula {
+    background: linear-gradient(135deg, #748ffc, #9775fa);
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 14px;
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    display: inline-block;
+    margin-top: 8px;
+    box-shadow: 0 4px 14px rgba(116,143,252,0.3);
+  }
+
+  .celebrate {
+    animation: celebrate 0.6s ease-out;
+  }
+  @keyframes celebrate {
+    0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+    60% { transform: scale(1.1) rotate(2deg); }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+
+  /* Confetti */
+  .confetti-container {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+    overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Prompt output (playground requirement) */
+  .prompt-output {
+    max-width: 720px;
+    width: 100%;
+    margin-top: 18px;
+    background: #1a1b26;
+    border-radius: 16px;
+    padding: 16px;
+    color: #c0caf5;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .prompt-output .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #414868;
+    color: #c0caf5;
+    border: none;
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .prompt-output .copy-btn:hover { background: #565f89; }
+
+  @media (max-width: 480px) {
+    .stage { padding: 16px 8px; }
+    .controls { padding: 10px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Magic Number Pairing!</h1>
+<p class="subtitle">Learn the secret trick to add numbers super fast</p>
+
+<div class="controls">
+  <label>Numbers 1 to</label>
+  <input type="range" id="rangeSlider" min="4" max="20" value="10" step="2">
+  <span class="range-val" id="rangeVal">10</span>
+  <button class="btn btn-step" id="btnStep">Next Step</button>
+  <button class="btn btn-play" id="btnPlay">Auto Play</button>
+  <button class="btn btn-reset" id="btnReset">Start Over</button>
+</div>
+
+<div class="stage" id="stage">
+  <div class="message-box" id="message">Press <b>Next Step</b> or <b>Auto Play</b> to begin!</div>
+  <div class="number-row" id="numberRow"></div>
+  <div class="pairs-area" id="pairsArea"></div>
+</div>
+
+<div class="prompt-output" id="promptOutput">
+  <button class="copy-btn" id="copyBtn">Copy</button>
+  <div id="promptText"></div>
+</div>
+
+<div class="confetti-container" id="confetti"></div>
+
+<script>
+const COLORS = [
+  '#ff6b6b','#ffa94d','#ffd43b','#69db7c','#38d9a9',
+  '#4dabf7','#748ffc','#9775fa','#e599f7','#f06595',
+  '#ff8787','#ffc078','#ffe066','#8ce99a','#63e6be',
+  '#74c0fc','#91a7ff','#b197fc','#eebefa','#f783ac'
+];
+
+let N = 10;
+let step = 0;       // 0 = initial, 1 = show numbers, 2..2+pairs-1 = pair each, then count, multiply, formula
+let totalSteps = 0;
+let autoPlaying = false;
+let autoTimer = null;
+
+const rangeSlider = document.getElementById('rangeSlider');
+const rangeVal = document.getElementById('rangeVal');
+const btnStep = document.getElementById('btnStep');
+const btnPlay = document.getElementById('btnPlay');
+const btnReset = document.getElementById('btnReset');
+const numberRow = document.getElementById('numberRow');
+const pairsArea = document.getElementById('pairsArea');
+const message = document.getElementById('message');
+const promptText = document.getElementById('promptText');
+const copyBtn = document.getElementById('copyBtn');
+const confettiEl = document.getElementById('confetti');
+
+function getColor(i) { return COLORS[i % COLORS.length]; }
+
+function calcTotalSteps() {
+  const pairs = N / 2;
+  // steps: 0=intro, 1=show numbers, 2..2+pairs-1=each pair, 2+pairs=count pairs, 2+pairs+1=multiply, 2+pairs+2=formula
+  return 2 + pairs + 3;
+}
+
+function reset() {
+  stopAuto();
+  step = 0;
+  N = parseInt(rangeSlider.value);
+  totalSteps = calcTotalSteps();
+  numberRow.innerHTML = '';
+  pairsArea.innerHTML = '';
+  message.innerHTML = 'Press <b>Next Step</b> or <b>Auto Play</b> to begin!';
+  message.className = 'message-box';
+  confettiEl.innerHTML = '';
+  updatePrompt();
+}
+
+function buildNumberCards() {
+  numberRow.innerHTML = '';
+  for (let i = 1; i <= N; i++) {
+    const card = document.createElement('div');
+    card.className = 'num-card';
+    card.id = 'card-' + i;
+    card.textContent = i;
+    card.style.background = getColor(i - 1);
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0) translateY(20px)';
+    numberRow.appendChild(card);
+    // stagger animation
+    setTimeout(() => {
+      card.style.opacity = '1';
+      card.style.transform = 'scale(1) translateY(0)';
+    }, i * 60);
+  }
+}
+
+function highlightPair(pairIndex) {
+  const a = pairIndex + 1;
+  const b = N - pairIndex;
+  const pairs = N / 2;
+
+  // Dim all, highlight the pair
+  for (let i = 1; i <= N; i++) {
+    const card = document.getElementById('card-' + i);
+    if (!card) continue;
+    // Already paired ones stay paired
+    const alreadyPaired = getPairedIndices(pairIndex);
+    if (i === a || i === b) {
+      card.className = 'num-card highlight';
+    } else if (alreadyPaired.has(i)) {
+      card.className = 'num-card paired dimmed';
+    } else {
+      card.className = 'num-card dimmed';
+    }
+  }
+
+  // Add pair to pairs area
+  const pairSum = a + b;
+  const group = document.createElement('div');
+  group.className = 'pair-group';
+  group.innerHTML = `
+    <span class="pair-num" style="background:${getColor(a-1)}">${a}</span>
+    <span class="pair-plus">+</span>
+    <span class="pair-num" style="background:${getColor(b-1)}">${b}</span>
+    <span class="pair-eq">= ${pairSum}</span>
+  `;
+  pairsArea.appendChild(group);
+
+  message.innerHTML = `Pair <b>${a}</b> with <b>${b}</b>... they add up to <b>${pairSum}</b>!`;
+  message.className = 'message-box';
+}
+
+function getPairedIndices(upToPairIndex) {
+  const set = new Set();
+  for (let p = 0; p < upToPairIndex; p++) {
+    set.add(p + 1);
+    set.add(N - p);
+  }
+  return set;
+}
+
+function showCountPairs() {
+  const pairs = N / 2;
+  const pairSum = 1 + N;
+  // Un-highlight all, mark all as paired
+  for (let i = 1; i <= N; i++) {
+    const card = document.getElementById('card-' + i);
+    if (card) card.className = 'num-card paired';
+  }
+  message.innerHTML = `We made <b>${pairs} pairs</b>, and each pair equals <b>${pairSum}</b>!`;
+  message.className = 'message-box celebrate';
+}
+
+function showMultiply() {
+  const pairs = N / 2;
+  const pairSum = 1 + N;
+  const total = pairs * pairSum;
+  message.innerHTML = `So the answer is:<span class="big">${pairs} &times; ${pairSum} = ${total}</span>`;
+  message.className = 'message-box celebrate';
+}
+
+function showFormula() {
+  const pairs = N / 2;
+  const pairSum = 1 + N;
+  const total = pairs * pairSum;
+  message.innerHTML = `
+    The magic formula:
+    <span class="formula">(1 + ${N}) &times; ${N} &divide; 2 = ${total}</span>
+    <br><span style="font-size:0.85em;color:#868e96;margin-top:6px;display:inline-block;">Works for any range of numbers!</span>
+  `;
+  message.className = 'message-box celebrate';
+  launchConfetti();
+}
+
+function advanceStep() {
+  const pairs = N / 2;
+
+  if (step === 0) {
+    // Show numbers
+    step = 1;
+    buildNumberCards();
+    message.innerHTML = `Here are the numbers <b>1</b> to <b>${N}</b>. Let's find a pattern!`;
+  } else if (step >= 1 && step < 1 + pairs) {
+    // Pair step
+    const pairIndex = step - 1;
+    step++;
+    highlightPair(pairIndex);
+  } else if (step === 1 + pairs) {
+    step++;
+    showCountPairs();
+  } else if (step === 2 + pairs) {
+    step++;
+    showMultiply();
+  } else if (step === 3 + pairs) {
+    step++;
+    showFormula();
+    stopAuto();
+  }
+  updatePrompt();
+}
+
+function startAuto() {
+  if (autoPlaying) { stopAuto(); return; }
+  autoPlaying = true;
+  btnPlay.textContent = 'Pause';
+  btnPlay.style.background = 'linear-gradient(135deg, #ffa94d, #fd7e14)';
+  autoTimer = setInterval(() => {
+    const pairs = N / 2;
+    if (step > 3 + pairs) {
+      stopAuto();
+      return;
+    }
+    advanceStep();
+  }, 1200);
+}
+
+function stopAuto() {
+  autoPlaying = false;
+  clearInterval(autoTimer);
+  btnPlay.textContent = 'Auto Play';
+  btnPlay.style.background = 'linear-gradient(135deg, #69db7c, #40c057)';
+}
+
+function launchConfetti() {
+  confettiEl.innerHTML = '';
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.background = COLORS[Math.floor(Math.random() * COLORS.length)];
+    piece.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    piece.style.animationDelay = Math.random() * 0.5 + 's';
+    piece.style.width = (6 + Math.random() * 8) + 'px';
+    piece.style.height = (6 + Math.random() * 8) + 'px';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    confettiEl.appendChild(piece);
+  }
+  setTimeout(() => { confettiEl.innerHTML = ''; }, 4000);
+}
+
+function updatePrompt() {
+  const pairs = N / 2;
+  const pairSum = 1 + N;
+  const total = pairs * pairSum;
+  const parts = [];
+  parts.push(`Sum of numbers from 1 to ${N}.`);
+
+  if (step > 1) {
+    const completedPairs = Math.min(step - 1, pairs);
+    if (completedPairs > 0) {
+      parts.push(`Pairing from ends: each pair sums to ${pairSum}.`);
+    }
+    if (completedPairs === pairs) {
+      parts.push(`${pairs} pairs total.`);
+    }
+  }
+  if (step > 2 + pairs) {
+    parts.push(`${pairs} x ${pairSum} = ${total}.`);
+  }
+  if (step > 3 + pairs) {
+    parts.push(`Formula: (1 + ${N}) x ${N} / 2 = ${total}.`);
+  }
+
+  promptText.textContent = parts.join(' ');
+}
+
+// Events
+rangeSlider.addEventListener('input', () => {
+  rangeVal.textContent = rangeSlider.value;
+  reset();
+});
+
+btnStep.addEventListener('click', () => {
+  const pairs = N / 2;
+  if (step > 3 + pairs) { reset(); return; }
+  advanceStep();
+});
+
+btnPlay.addEventListener('click', startAuto);
+btnReset.addEventListener('click', reset);
+
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(promptText.textContent).then(() => {
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+  });
+});
+
+// Init
+totalSteps = calcTotalSteps();
+updatePrompt();
+</script>
+</body>
+</html>
