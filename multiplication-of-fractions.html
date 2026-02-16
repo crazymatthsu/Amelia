@@ -45,13 +45,32 @@
       const simplifiedDen = finalDen / divisor;
       const isSimplifiable = divisor > 1;
 
-      const handleInputChange = (setter, value) => {
-        const val = parseInt(value);
-        if (!isNaN(val)) {
-          if (val < MIN_VAL) setter(MIN_VAL);
-          else if (val > MAX_VAL) setter(MAX_VAL);
-          else setter(val);
-        }
+      const adjust = (setter, getter, delta, min, max) => {
+        const next = getter + delta;
+        if (next >= min && next <= max) setter(next);
+      };
+
+      // Stepper button component for mobile-friendly +/- controls
+      const STEPPER_STYLES = {
+        blue: {
+          btn: "w-10 h-10 md:w-8 md:h-8 rounded-lg font-bold text-xl bg-white border-2 border-blue-300 text-blue-700 active:bg-blue-100 select-none",
+          val: "w-10 text-center text-2xl font-extrabold text-blue-700",
+        },
+        yellow: {
+          btn: "w-10 h-10 md:w-8 md:h-8 rounded-lg font-bold text-xl bg-white border-2 border-yellow-300 text-yellow-700 active:bg-yellow-100 select-none",
+          val: "w-10 text-center text-2xl font-extrabold text-yellow-700",
+        },
+      };
+
+      const Stepper = ({ value, onDec, onInc, color }) => {
+        const s = STEPPER_STYLES[color];
+        return (
+          <div className="flex items-center gap-1">
+            <button onClick={onDec} className={s.btn}>-</button>
+            <span className={s.val}>{value}</span>
+            <button onClick={onInc} className={s.btn}>+</button>
+          </div>
+        );
       };
 
       const nextStep = () => {
@@ -160,56 +179,49 @@
               <div className="bg-indigo-50 p-6 rounded-2xl border-2 border-indigo-100">
                 <h3 className="text-xl font-bold text-indigo-800 mb-4 text-center">Pick Your Fractions</h3>
 
-                <div className="flex items-center justify-center gap-4 text-2xl font-bold">
+                <div className="flex items-center justify-center gap-3 md:gap-4">
 
                   <div className="flex flex-col items-center gap-2">
-                    <input
-                      type="number"
-                      value={num1}
-                      onChange={(e) => handleInputChange(setNum1, e.target.value)}
-                      className="w-16 h-16 text-center border-4 border-blue-300 rounded-lg text-blue-700 bg-white focus:outline-none focus:ring-4 focus:ring-blue-200"
+                    <Stepper
+                      value={num1} color="blue"
+                      onDec={() => adjust(setNum1, num1, -1, MIN_VAL, den1 - 1)}
+                      onInc={() => adjust(setNum1, num1, 1, MIN_VAL, den1 - 1)}
                     />
-                    <div className="w-16 h-1 bg-slate-800 rounded-full"></div>
-                    <input
-                      type="number"
-                      value={den1}
-                      onChange={(e) => handleInputChange(setDen1, e.target.value)}
-                      className="w-16 h-16 text-center border-4 border-blue-300 rounded-lg text-blue-700 bg-white focus:outline-none focus:ring-4 focus:ring-blue-200"
+                    <div className="w-full h-1 bg-slate-800 rounded-full"></div>
+                    <Stepper
+                      value={den1} color="blue"
+                      onDec={() => adjust(setDen1, den1, -1, Math.max(2, num1 + 1), MAX_VAL)}
+                      onInc={() => adjust(setDen1, den1, 1, Math.max(2, num1 + 1), MAX_VAL)}
                     />
                   </div>
 
-                  <span className="text-slate-400 text-3xl">&times;</span>
+                  <span className="text-slate-400 text-3xl font-bold">&times;</span>
 
                   <div className="flex flex-col items-center gap-2">
-                    <input
-                      type="number"
-                      value={num2}
-                      onChange={(e) => handleInputChange(setNum2, e.target.value)}
-                      className="w-16 h-16 text-center border-4 border-yellow-300 rounded-lg text-yellow-700 bg-white focus:outline-none focus:ring-4 focus:ring-yellow-200"
+                    <Stepper
+                      value={num2} color="yellow"
+                      onDec={() => adjust(setNum2, num2, -1, MIN_VAL, den2 - 1)}
+                      onInc={() => adjust(setNum2, num2, 1, MIN_VAL, den2 - 1)}
                     />
-                    <div className="w-16 h-1 bg-slate-800 rounded-full"></div>
-                    <input
-                      type="number"
-                      value={den2}
-                      onChange={(e) => handleInputChange(setDen2, e.target.value)}
-                      className="w-16 h-16 text-center border-4 border-yellow-300 rounded-lg text-yellow-700 bg-white focus:outline-none focus:ring-4 focus:ring-yellow-200"
+                    <div className="w-full h-1 bg-slate-800 rounded-full"></div>
+                    <Stepper
+                      value={den2} color="yellow"
+                      onDec={() => adjust(setDen2, den2, -1, Math.max(2, num2 + 1), MAX_VAL)}
+                      onInc={() => adjust(setDen2, den2, 1, Math.max(2, num2 + 1), MAX_VAL)}
                     />
                   </div>
                 </div>
 
-                {(num1 >= den1 || num2 >= den2) && (
-                  <p className="text-red-500 text-sm text-center mt-4 font-medium">
-                    Tip: For this demo, let's keep the top number smaller than the bottom number (proper fractions)!
-                  </p>
-                )}
+                <p className="text-slate-400 text-xs text-center mt-3">
+                  Use the + and - buttons to change values
+                </p>
               </div>
 
               <div className="flex justify-center gap-4">
                 {step === 0 ? (
                   <button
                     onClick={playAnimation}
-                    disabled={num1 >= den1 || num2 >= den2}
-                    className="flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold rounded-full shadow-lg transform transition hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold rounded-full shadow-lg transform transition hover:scale-105"
                   >
                     &#9654; Solve It!
                   </button>
