@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fraction Smash!</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fade-in 0.5s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const FractionApp = () => {
+      const [num1, setNum1] = useState(3);
+      const [den1, setDen1] = useState(5);
+      const [num2, setNum2] = useState(1);
+      const [den2, setDen2] = useState(9);
+      const [step, setStep] = useState(0);
+      const [isPlaying, setIsPlaying] = useState(false);
+
+      const MIN_VAL = 1;
+      const MAX_VAL = 12;
+
+      const gcd = (a, b) => {
+        return b === 0 ? a : gcd(b, a % b);
+      };
+
+      const finalNum = num1 * num2;
+      const finalDen = den1 * den2;
+      const divisor = gcd(finalNum, finalDen);
+      const simplifiedNum = finalNum / divisor;
+      const simplifiedDen = finalDen / divisor;
+      const isSimplifiable = divisor > 1;
+
+      const handleInputChange = (setter, value) => {
+        const val = parseInt(value);
+        if (!isNaN(val)) {
+          if (val < MIN_VAL) setter(MIN_VAL);
+          else if (val > MAX_VAL) setter(MAX_VAL);
+          else setter(val);
+        }
+      };
+
+      const nextStep = () => {
+        if (step < 4) setStep(step + 1);
+      };
+
+      const prevStep = () => {
+        if (step > 0) setStep(step - 1);
+      };
+
+      const reset = () => {
+        setStep(0);
+        setIsPlaying(false);
+      };
+
+      const playAnimation = () => {
+        setStep(1);
+        setIsPlaying(true);
+      };
+
+      useEffect(() => {
+        let timer;
+        if (isPlaying && step > 0 && step < 3) {
+          timer = setTimeout(() => {
+            setStep((s) => s + 1);
+          }, 2500);
+        } else if (isPlaying && step === 3) {
+          timer = setTimeout(() => {
+            setStep(4);
+            setIsPlaying(false);
+          }, 2500);
+        }
+        return () => clearTimeout(timer);
+      }, [isPlaying, step]);
+
+      const GridVisualizer = () => {
+        return (
+          <div className="relative w-full max-w-md aspect-square bg-white border-4 border-gray-800 rounded-xl overflow-hidden shadow-2xl mx-auto">
+            <div
+              className="grid w-full h-full"
+              style={{
+                gridTemplateColumns: `repeat(${den1}, 1fr)`,
+                gridTemplateRows: `repeat(${den2}, 1fr)`,
+              }}
+            >
+              {Array.from({ length: den2 }).map((_, rowIndex) =>
+                Array.from({ length: den1 }).map((_, colIndex) => {
+                  const isFraction1 = colIndex < num1;
+                  const isFraction2 = rowIndex < num2;
+
+                  let bgClass = "bg-transparent";
+                  let borderClass = "border border-gray-200";
+
+                  if (step === 1) {
+                    if (isFraction1) bgClass = "bg-blue-300";
+                  } else if (step >= 2) {
+                    if (isFraction1 && isFraction2) {
+                      bgClass = "bg-green-500 animate-pulse";
+                    } else if (isFraction1) {
+                      bgClass = "bg-blue-300";
+                    } else if (isFraction2) {
+                      bgClass = "bg-yellow-300";
+                    }
+                  }
+
+                  return (
+                    <div
+                      key={`${rowIndex}-${colIndex}`}
+                      className={`${borderClass} ${bgClass} transition-colors duration-500 ease-in-out`}
+                    />
+                  );
+                })
+              )}
+            </div>
+
+            {step >= 1 && (
+              <div className="absolute -top-8 left-0 w-full text-center font-bold text-blue-600 animate-fade-in">
+                {num1} columns of {den1}
+              </div>
+            )}
+            {step >= 2 && (
+              <div className="absolute -left-12 top-0 h-full flex items-center -rotate-90 font-bold text-yellow-600 animate-fade-in">
+                {num2} rows of {den2}
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      return (
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-800 p-4 md:p-8 flex flex-col items-center">
+
+          <header className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-indigo-600 mb-2">
+              Fraction Smash!
+            </h1>
+            <p className="text-slate-600 text-lg">
+              Let's learn how to multiply fractions visually.
+            </p>
+          </header>
+
+          <div className="w-full max-w-4xl bg-white rounded-3xl shadow-xl p-6 md:p-10 flex flex-col md:flex-row gap-8 items-center md:items-start">
+
+            <div className="w-full md:w-1/2 flex flex-col gap-6">
+
+              <div className="bg-indigo-50 p-6 rounded-2xl border-2 border-indigo-100">
+                <h3 className="text-xl font-bold text-indigo-800 mb-4 text-center">Pick Your Fractions</h3>
+
+                <div className="flex items-center justify-center gap-4 text-2xl font-bold">
+
+                  <div className="flex flex-col items-center gap-2">
+                    <input
+                      type="number"
+                      value={num1}
+                      onChange={(e) => handleInputChange(setNum1, e.target.value)}
+                      className="w-16 h-16 text-center border-4 border-blue-300 rounded-lg text-blue-700 bg-white focus:outline-none focus:ring-4 focus:ring-blue-200"
+                    />
+                    <div className="w-16 h-1 bg-slate-800 rounded-full"></div>
+                    <input
+                      type="number"
+                      value={den1}
+                      onChange={(e) => handleInputChange(setDen1, e.target.value)}
+                      className="w-16 h-16 text-center border-4 border-blue-300 rounded-lg text-blue-700 bg-white focus:outline-none focus:ring-4 focus:ring-blue-200"
+                    />
+                  </div>
+
+                  <span className="text-slate-400 text-3xl">&times;</span>
+
+                  <div className="flex flex-col items-center gap-2">
+                    <input
+                      type="number"
+                      value={num2}
+                      onChange={(e) => handleInputChange(setNum2, e.target.value)}
+                      className="w-16 h-16 text-center border-4 border-yellow-300 rounded-lg text-yellow-700 bg-white focus:outline-none focus:ring-4 focus:ring-yellow-200"
+                    />
+                    <div className="w-16 h-1 bg-slate-800 rounded-full"></div>
+                    <input
+                      type="number"
+                      value={den2}
+                      onChange={(e) => handleInputChange(setDen2, e.target.value)}
+                      className="w-16 h-16 text-center border-4 border-yellow-300 rounded-lg text-yellow-700 bg-white focus:outline-none focus:ring-4 focus:ring-yellow-200"
+                    />
+                  </div>
+                </div>
+
+                {(num1 >= den1 || num2 >= den2) && (
+                  <p className="text-red-500 text-sm text-center mt-4 font-medium">
+                    Tip: For this demo, let's keep the top number smaller than the bottom number (proper fractions)!
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-center gap-4">
+                {step === 0 ? (
+                  <button
+                    onClick={playAnimation}
+                    disabled={num1 >= den1 || num2 >= den2}
+                    className="flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold rounded-full shadow-lg transform transition hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    &#9654; Solve It!
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <button onClick={reset} className="p-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full text-lg">
+                      &#8634;
+                    </button>
+                    <button onClick={prevStep} disabled={step <= 0} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full font-bold disabled:opacity-50">
+                      Back
+                    </button>
+                    <button onClick={nextStep} disabled={step >= 4} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold flex items-center gap-2 disabled:opacity-50">
+                      Next &#8594;
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-orange-50 p-6 rounded-2xl border-l-8 border-orange-400 min-h-[160px]">
+                <h4 className="font-bold text-orange-800 text-lg mb-2">
+                  {step === 0 && "Ready to start?"}
+                  {step === 1 && "Step 1: The Blue Fraction"}
+                  {step === 2 && "Step 2: The Yellow Fraction"}
+                  {step === 3 && "Step 3: The Intersection"}
+                  {step === 4 && "Step 4: The Math"}
+                </h4>
+                <p className="text-slate-700 text-lg leading-relaxed">
+                  {step === 0 && "Enter your fractions above. Remember, the bottom number (denominator) is how many pieces we cut the whole into."}
+                  {step === 1 && `First, we slice our square vertically into ${den1} parts and shade ${num1} of them blue. This represents ${num1}/${den1}.`}
+                  {step === 2 && `Next, we slice the SAME square horizontally into ${den2} parts and shade ${num2} of them yellow. This represents ${num2}/${den2}.`}
+                  {step === 3 && "Look at the GREEN squares! This is where the blue and yellow overlap. This is our answer! Count the green squares."}
+                  {step === 4 && (
+                    <span>
+                      The rule is easy: <br/>
+                      1. Multiply the tops (Numerators): <b>{num1} &times; {num2} = {finalNum}</b><br/>
+                      2. Multiply the bottoms (Denominators): <b>{den1} &times; {den2} = {finalDen}</b>
+                    </span>
+                  )}
+                </p>
+              </div>
+
+            </div>
+
+            <div className="w-full md:w-1/2 flex flex-col items-center justify-center pt-8 md:pt-0">
+
+              <GridVisualizer />
+
+              <div className={`mt-8 transition-opacity duration-500 ${step >= 3 ? 'opacity-100' : 'opacity-0'}`}>
+                <div className="flex items-center gap-4 text-3xl md:text-5xl font-extrabold text-slate-800">
+                  <div className="flex flex-col items-center">
+                    <span className="text-green-600">{finalNum}</span>
+                    <div className="w-full h-1 bg-slate-800 my-1"></div>
+                    <span className="text-slate-800">{finalDen}</span>
+                  </div>
+
+                  {step === 4 && isSimplifiable && (
+                    <>
+                      <div className="text-slate-400">=</div>
+                      <div className="flex flex-col items-center animate-bounce">
+                        <span className="text-indigo-600">{simplifiedNum}</span>
+                        <div className="w-full h-1 bg-indigo-600 my-1"></div>
+                        <span className="text-indigo-600">{simplifiedDen}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {step === 4 && isSimplifiable && (
+                  <p className="text-center text-indigo-600 mt-2 font-semibold text-sm">Simplified!</p>
+                )}
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<FractionApp />);
+  </script>
+</body>
+</html>
