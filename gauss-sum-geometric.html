@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staircase Math Magic!</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:#f0f4ff;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:12px;
+  overflow-x:hidden;
+}
+h1{font-size:clamp(1.4rem,5vw,2.2rem);color:#364fc7;text-align:center;margin-bottom:2px}
+.subtitle{color:#868e96;font-size:clamp(.8rem,2.5vw,1rem);text-align:center;margin-bottom:12px}
+
+.controls{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;
+  margin-bottom:14px;background:#fff;padding:10px 16px;border-radius:14px;
+  box-shadow:0 2px 12px rgba(0,0,0,.08);max-width:680px;width:100%;
+}
+.controls label{font-weight:700;color:#495057;font-size:.9rem}
+.controls input[type=range]{width:90px;accent-color:#748ffc}
+.range-val{background:#748ffc;color:#fff;font-weight:800;border-radius:8px;padding:2px 10px;font-size:.95rem;min-width:28px;text-align:center}
+
+.btn{
+  border:none;border-radius:10px;padding:7px 16px;font-size:.95rem;font-weight:700;
+  cursor:pointer;transition:transform .1s,box-shadow .15s;box-shadow:0 3px 8px rgba(0,0,0,.12);
+}
+.btn:active{transform:scale(.95)}
+.btn-step{background:linear-gradient(135deg,#748ffc,#4c6ef5);color:#fff}
+.btn-play{background:linear-gradient(135deg,#69db7c,#40c057);color:#fff}
+.btn-reset{background:linear-gradient(135deg,#ffa94d,#fd7e14);color:#fff}
+
+.stage{
+  position:relative;width:100%;max-width:680px;
+  background:#fff;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.08);
+  padding:16px 12px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  overflow:hidden;
+}
+
+.message-box{
+  text-align:center;font-size:clamp(.95rem,3vw,1.25rem);font-weight:700;color:#364fc7;
+  min-height:44px;display:flex;align-items:center;justify-content:center;padding:6px 8px;
+  line-height:1.35;flex-wrap:wrap;
+}
+.message-box .big{font-size:clamp(1.3rem,4.5vw,2rem);display:block;margin-top:4px}
+.message-box .formula{
+  background:linear-gradient(135deg,#748ffc,#9775fa);color:#fff;
+  padding:6px 18px;border-radius:12px;font-size:clamp(1rem,3vw,1.4rem);
+  display:inline-block;margin-top:6px;box-shadow:0 4px 14px rgba(116,143,252,.3);
+}
+
+.canvas-wrap{
+  width:100%;display:flex;justify-content:center;
+  overflow:hidden;position:relative;
+}
+canvas{display:block;max-width:100%}
+
+.celebrate{animation:celebrate .6s ease-out}
+@keyframes celebrate{0%{transform:scale(.5) rotate(-5deg);opacity:0}60%{transform:scale(1.1) rotate(2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+
+.confetti-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000;overflow:hidden}
+.confetti-piece{position:absolute;width:10px;height:10px;border-radius:2px;animation:confettiFall linear forwards}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+.prompt-output{
+  max-width:680px;width:100%;margin-top:14px;background:#1a1b26;border-radius:14px;
+  padding:14px;color:#c0caf5;font-family:'SF Mono','Fira Code',monospace;font-size:.82rem;
+  line-height:1.5;position:relative;
+}
+.prompt-output .copy-btn{
+  position:absolute;top:8px;right:8px;background:#414868;color:#c0caf5;border:none;
+  border-radius:8px;padding:4px 12px;font-size:.78rem;font-weight:600;cursor:pointer;
+  transition:background .15s;
+}
+.prompt-output .copy-btn:hover{background:#565f89}
+
+/* dimension labels */
+.dim-label{
+  position:absolute;font-weight:900;font-size:clamp(.85rem,2.5vw,1.1rem);
+  color:#364fc7;white-space:nowrap;pointer-events:none;
+}
+
+@media(max-width:480px){
+  .stage{padding:12px 6px 16px}
+  .controls{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+
+<h1>Staircase Math Magic!</h1>
+<p class="subtitle">See WHY the formula works — with shapes!</p>
+
+<div class="controls">
+  <label>Numbers 1 to</label>
+  <input type="range" id="rangeSlider" min="4" max="20" value="10" step="1">
+  <span class="range-val" id="rangeVal">10</span>
+  <button class="btn btn-step" id="btnStep">Next Step</button>
+  <button class="btn btn-play" id="btnPlay">Auto Play</button>
+  <button class="btn btn-reset" id="btnReset">Start Over</button>
+</div>
+
+<div class="stage" id="stage">
+  <div class="message-box" id="message">Press <b>Next Step</b> or <b>Auto Play</b> to start!</div>
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="640" height="400"></canvas>
+  </div>
+</div>
+
+<div class="prompt-output">
+  <button class="copy-btn" id="copyBtn">Copy</button>
+  <div id="promptText"></div>
+</div>
+
+<div class="confetti-container" id="confetti"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────
+const WARM = ['#ff6b6b','#ff8787','#ffa94d','#ffc078','#ffd43b','#ffe066','#f06595','#e599f7','#ff922b','#fd7e14','#fab005','#e67700','#d6336c','#c2255c','#f76707','#e8590c'];
+const COOL = ['#4dabf7','#74c0fc','#38d9a9','#63e6be','#748ffc','#91a7ff','#3bc9db','#66d9e8','#4c6ef5','#5c7cfa','#15aabf','#1098ad','#3b5bdb','#4263eb','#0c8599','#0b7285'];
+const CONFETTI_COLORS = ['#ff6b6b','#ffa94d','#ffd43b','#69db7c','#4dabf7','#748ffc','#9775fa','#e599f7','#f06595','#38d9a9'];
+
+let N = 10;
+let step = 0;
+// Steps: 0=ready, 1=build staircase, 2=question, 3=show copy, 4=slide together, 5=dimensions, 6=divide, 7=formula
+const TOTAL_STEPS = 7;
+
+let autoPlaying = false;
+let autoTimer = null;
+
+// Animation state
+let animProgress = 0; // 0..1 for current step animation
+let animRAF = null;
+let animResolve = null;
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const rangeSlider = document.getElementById('rangeSlider');
+const rangeValEl = document.getElementById('rangeVal');
+const btnStep = document.getElementById('btnStep');
+const btnPlay = document.getElementById('btnPlay');
+const btnReset = document.getElementById('btnReset');
+const messageEl = document.getElementById('message');
+const promptText = document.getElementById('promptText');
+const copyBtn = document.getElementById('copyBtn');
+const confettiEl = document.getElementById('confetti');
+
+// ─── Drawing helpers ─────────────────────────────────
+function getBlockSize(displayW, displayH) {
+  // In step 3, we need space for TWO staircases side by side with a gap
+  // widest layout: step 3 = N * 2 + gap (~1.5 blocks) wide
+  // tallest layout: N rows + top padding for labels
+  const padding = 50; // space for dimension arrows/labels
+  const availW = displayW - padding * 2;
+  const availH = displayH - padding;
+  // Step 3 is widest: two staircases + gap = roughly (N * 2 + 2) blocks wide
+  const maxColsNeeded = N * 2 + 2;
+  const rowsNeeded = N;
+  return Math.max(8, Math.min(Math.floor(availW / maxColsNeeded), Math.floor(availH / rowsNeeded), 36));
+}
+
+function warmColor(row) { return WARM[row % WARM.length]; }
+function coolColor(row) { return COOL[row % COOL.length]; }
+
+function drawBlock(x, y, size, color, alpha) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, size - 1, size - 1);
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, size - 1, size - 1);
+  ctx.globalAlpha = 1;
+}
+
+// ─── Render functions per step ───────────────────────
+function render() {
+  const dpr = window.devicePixelRatio || 1;
+  const displayW = Math.min(680, window.innerWidth - 40);
+  const displayH = Math.min(520, Math.max(320, window.innerHeight * 0.48));
+  canvas.style.width = displayW + 'px';
+  canvas.style.height = displayH + 'px';
+  canvas.width = displayW * dpr;
+  canvas.height = displayH * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  ctx.clearRect(0, 0, displayW, displayH);
+
+  const bs = getBlockSize(displayW, displayH);
+  const stairW = N; // max blocks wide for staircase
+  const stairH = N; // rows tall
+
+  // Center position for staircase(s)
+  const totalRectW = (N + 1) * bs;
+  const totalH = N * bs;
+  const startY = (displayH - totalH) / 2 + 10;
+
+  if (step === 0) return;
+
+  if (step === 1) {
+    // Build staircase animated
+    const startX = (displayW - stairW * bs) / 2;
+    const totalBlocks = N * (N + 1) / 2;
+    const blocksToShow = Math.ceil(animProgress * totalBlocks);
+    let count = 0;
+    for (let row = 0; row < N; row++) {
+      const numBlocks = row + 1;
+      for (let col = 0; col < numBlocks; col++) {
+        count++;
+        if (count <= blocksToShow) {
+          const x = startX + col * bs;
+          const y = startY + row * bs;
+          drawBlock(x, y, bs, warmColor(row), 1);
+        }
+      }
+    }
+    // Row labels
+    if (animProgress > 0.1) {
+      ctx.font = `bold ${Math.max(10, bs * 0.45)}px system-ui`;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let row = 0; row < N; row++) {
+        const numBlocks = row + 1;
+        const blocksSoFar = (row + 1) * (row + 2) / 2;
+        if (blocksSoFar <= blocksToShow) {
+          ctx.fillStyle = '#495057';
+          ctx.fillText(numBlocks.toString(), (displayW - stairW * bs) / 2 - 6, startY + row * bs + bs / 2);
+        }
+      }
+    }
+    return;
+  }
+
+  if (step === 2) {
+    // Static staircase + question
+    const startX = (displayW - stairW * bs) / 2;
+    for (let row = 0; row < N; row++) {
+      for (let col = 0; col <= row; col++) {
+        drawBlock(startX + col * bs, startY + row * bs, bs, warmColor(row), 1);
+      }
+    }
+    drawStairLabels(startX, startY, bs);
+    return;
+  }
+
+  if (step === 3) {
+    // Show original + animated blue copy (right-aligned, flipped)
+    const gap = Math.round(bs * 2);
+    const pairW = stairW * bs + gap + stairW * bs;
+    const origX = (displayW - pairW) / 2;
+    const copyAreaX = origX + stairW * bs + gap; // left edge of the N-wide blue area
+
+    // Original staircase (left-aligned)
+    for (let row = 0; row < N; row++) {
+      for (let col = 0; col <= row; col++) {
+        drawBlock(origX + col * bs, startY + row * bs, bs, warmColor(row), 1);
+      }
+    }
+
+    // Flipped blue copy: row r has (N - r) blocks, RIGHT-ALIGNED within N columns
+    // This makes it a mirror image of the orange staircase
+    const blocksTotal = N * (N + 1) / 2;
+    const blocksToShow = Math.ceil(animProgress * blocksTotal);
+    let count = 0;
+    for (let row = 0; row < N; row++) {
+      const numBlocks = N - row;
+      const offsetCols = row; // empty columns on the left to right-align
+      for (let col = 0; col < numBlocks; col++) {
+        count++;
+        if (count <= blocksToShow) {
+          const x = copyAreaX + (offsetCols + col) * bs;
+          const y = startY + row * bs;
+          drawBlock(x, y, bs, coolColor(row), 1);
+        }
+      }
+    }
+    return;
+  }
+
+  if (step === 4) {
+    // Animate the blue staircase sliding left to fill the gaps in the orange one
+    // forming an (N+1) x N rectangle
+    const gap = Math.round(bs * 2);
+    const pairW = stairW * bs + gap + stairW * bs;
+    const origStartX = (displayW - pairW) / 2;
+    const copyAreaStartX = origStartX + stairW * bs + gap;
+
+    // Target: everything centered as an (N+1)-wide rectangle
+    const rectTotalW = (N + 1) * bs;
+    const rectX = (displayW - rectTotalW) / 2;
+
+    const t = easeInOut(animProgress);
+
+    // Orange staircase slides to final rectangle position
+    const curOrigX = lerp(origStartX, rectX, t);
+
+    // Original staircase
+    for (let row = 0; row < N; row++) {
+      for (let col = 0; col <= row; col++) {
+        drawBlock(curOrigX + col * bs, startY + row * bs, bs, warmColor(row), 1);
+      }
+    }
+
+    // Blue blocks: each block travels from its step-3 position to its final rectangle position
+    for (let row = 0; row < N; row++) {
+      const numBlocks = N - row;
+      const offsetCols = row; // right-align offset from step 3
+      for (let col = 0; col < numBlocks; col++) {
+        // Start position: right-aligned in the blue area
+        const startX = copyAreaStartX + (offsetCols + col) * bs;
+        // End position: fills columns (row+1) to N in the rectangle
+        const endX = rectX + (row + 1 + col) * bs;
+        const curX = lerp(startX, endX, t);
+        drawBlock(curX, startY + row * bs, bs, coolColor(row), 1);
+      }
+    }
+    return;
+  }
+
+  if (step >= 5) {
+    // Rectangle formed — draw it centered
+    const rectW = (N + 1) * bs;
+    const rx = (displayW - rectW) / 2;
+
+    // Original staircase (left side of each row)
+    for (let row = 0; row < N; row++) {
+      for (let col = 0; col <= row; col++) {
+        const alpha = (step === 6) ? 1 : 1;
+        drawBlock(rx + col * bs, startY + row * bs, bs, warmColor(row), alpha);
+      }
+    }
+
+    // Flipped copy (right side of each row)
+    for (let row = 0; row < N; row++) {
+      const numBlocks = N - row;
+      const startCol = row + 1;
+      for (let col = 0; col < numBlocks; col++) {
+        const alpha = (step === 6) ? 0.4 : 1;
+        drawBlock(rx + (startCol + col) * bs, startY + row * bs, bs, coolColor(row), alpha);
+      }
+    }
+
+    // Dimension labels
+    if (step >= 5) {
+      ctx.font = `bold ${Math.max(12, bs * 0.55)}px system-ui`;
+
+      // Top label: N+1 columns
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = '#364fc7';
+      const topY = startY - 8;
+      const arrowY = topY - 2;
+
+      // Arrow line across top
+      ctx.strokeStyle = '#364fc7';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(rx + 2, arrowY);
+      ctx.lineTo(rx + rectW - 2, arrowY);
+      ctx.stroke();
+      // Arrow heads
+      ctx.beginPath(); ctx.moveTo(rx + 2, arrowY); ctx.lineTo(rx + 8, arrowY - 4); ctx.lineTo(rx + 8, arrowY + 4); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(rx + rectW - 2, arrowY); ctx.lineTo(rx + rectW - 8, arrowY - 4); ctx.lineTo(rx + rectW - 8, arrowY + 4); ctx.fill();
+      ctx.fillText(`${N + 1} columns`, rx + rectW / 2, arrowY - 4);
+
+      // Right label: N rows
+      ctx.save();
+      ctx.translate(rx + rectW + 12, startY + totalH / 2);
+      ctx.rotate(Math.PI / 2);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(`${N} rows`, 0, -4);
+      ctx.restore();
+
+      // Right arrow
+      const arrowX = rx + rectW + 6;
+      ctx.beginPath();
+      ctx.moveTo(arrowX, startY + 2);
+      ctx.lineTo(arrowX, startY + totalH - 2);
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(arrowX, startY + 2); ctx.lineTo(arrowX - 4, startY + 8); ctx.lineTo(arrowX + 4, startY + 8); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(arrowX, startY + totalH - 2); ctx.lineTo(arrowX - 4, startY + totalH - 8); ctx.lineTo(arrowX + 4, startY + totalH - 8); ctx.fill();
+    }
+
+    // Outline the rectangle
+    ctx.strokeStyle = '#364fc7';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(rx, startY, rectW, totalH);
+
+    // If step 6, highlight just the warm staircase
+    if (step === 6) {
+      ctx.strokeStyle = '#e03131';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([6, 4]);
+      // Outline the staircase shape
+      ctx.beginPath();
+      ctx.moveTo(rx, startY);
+      for (let row = 0; row < N; row++) {
+        const cols = row + 1;
+        ctx.lineTo(rx, startY + row * bs);
+        ctx.lineTo(rx + cols * bs, startY + row * bs);
+        ctx.lineTo(rx + cols * bs, startY + (row + 1) * bs);
+      }
+      ctx.lineTo(rx, startY + N * bs);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+}
+
+function drawStairLabels(startX, startY, bs) {
+  ctx.font = `bold ${Math.max(10, bs * 0.45)}px system-ui`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#495057';
+  for (let row = 0; row < N; row++) {
+    ctx.fillText((row + 1).toString(), startX - 6, startY + row * bs + bs / 2);
+  }
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeInOut(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+
+// ─── Animation runner ────────────────────────────────
+function animate(durationMs) {
+  return new Promise(resolve => {
+    animResolve = resolve;
+    animProgress = 0;
+    const start = performance.now();
+    function tick(now) {
+      animProgress = Math.min(1, (now - start) / durationMs);
+      render();
+      if (animProgress < 1) {
+        animRAF = requestAnimationFrame(tick);
+      } else {
+        animRAF = null;
+        resolve();
+      }
+    }
+    animRAF = requestAnimationFrame(tick);
+  });
+}
+
+function cancelAnim() {
+  if (animRAF) { cancelAnimationFrame(animRAF); animRAF = null; }
+  if (animResolve) { animResolve(); animResolve = null; }
+}
+
+// ─── Step logic ──────────────────────────────────────
+let stepping = false;
+
+async function advanceStep() {
+  if (stepping) return;
+  if (step > TOTAL_STEPS) { resetAll(); return; }
+  stepping = true;
+
+  step++;
+  const sum = N * (N + 1) / 2;
+
+  switch (step) {
+    case 1:
+      messageEl.innerHTML = `Building a staircase: <b>1 + 2 + 3 + ... + ${N}</b>`;
+      messageEl.className = 'message-box';
+      await animate(1200);
+      break;
+    case 2:
+      messageEl.innerHTML = `We have <b>${sum} blocks</b> total. How can we count them faster?`;
+      messageEl.className = 'message-box';
+      render();
+      break;
+    case 3:
+      messageEl.innerHTML = `Make a <span style="color:#4dabf7;font-weight:900">blue copy</span>, flipped upside-down!`;
+      messageEl.className = 'message-box';
+      await animate(1200);
+      break;
+    case 4:
+      messageEl.innerHTML = `Slide them together to make a <b>rectangle</b>!`;
+      messageEl.className = 'message-box';
+      await animate(1000);
+      break;
+    case 5:
+      messageEl.innerHTML = `The rectangle is <b>${N} rows</b> tall and <b>${N + 1} columns</b> wide = <span class="big">${N} &times; ${N + 1} = ${N * (N + 1)} blocks</span>`;
+      messageEl.className = 'message-box celebrate';
+      render();
+      break;
+    case 6:
+      messageEl.innerHTML = `But we used <b>TWO</b> staircases! Our orange staircase is <b>half</b>:<span class="big">${N * (N + 1)} &divide; 2 = ${sum}</span>`;
+      messageEl.className = 'message-box celebrate';
+      render();
+      break;
+    case 7:
+      messageEl.innerHTML = `The magic formula:<span class="formula">1 + 2 + ... + ${N} = ${N} &times; ${N + 1} &divide; 2 = ${sum}</span>`;
+      messageEl.className = 'message-box celebrate';
+      render();
+      launchConfetti();
+      stopAuto();
+      break;
+  }
+
+  updatePrompt();
+  stepping = false;
+}
+
+// ─── Controls ────────────────────────────────────────
+function resetAll() {
+  stopAuto();
+  cancelAnim();
+  stepping = false;
+  step = 0;
+  N = parseInt(rangeSlider.value);
+  messageEl.innerHTML = 'Press <b>Next Step</b> or <b>Auto Play</b> to start!';
+  messageEl.className = 'message-box';
+  confettiEl.innerHTML = '';
+  render();
+  updatePrompt();
+}
+
+function startAuto() {
+  if (autoPlaying) { stopAuto(); return; }
+  autoPlaying = true;
+  btnPlay.textContent = 'Pause';
+  btnPlay.style.background = 'linear-gradient(135deg,#ffa94d,#fd7e14)';
+  autoTick();
+}
+
+function autoTick() {
+  if (!autoPlaying) return;
+  if (step > TOTAL_STEPS) { stopAuto(); return; }
+  advanceStep().then(() => {
+    if (!autoPlaying) return;
+    autoTimer = setTimeout(autoTick, step === 1 || step === 3 || step === 4 ? 400 : 1400);
+  });
+}
+
+function stopAuto() {
+  autoPlaying = false;
+  clearTimeout(autoTimer);
+  btnPlay.textContent = 'Auto Play';
+  btnPlay.style.background = 'linear-gradient(135deg,#69db7c,#40c057)';
+}
+
+function launchConfetti() {
+  confettiEl.innerHTML = '';
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    p.style.animationDelay = Math.random() * 0.5 + 's';
+    p.style.width = (6 + Math.random() * 8) + 'px';
+    p.style.height = (6 + Math.random() * 8) + 'px';
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    confettiEl.appendChild(p);
+  }
+  setTimeout(() => { confettiEl.innerHTML = ''; }, 4000);
+}
+
+function updatePrompt() {
+  const sum = N * (N + 1) / 2;
+  const parts = [`Geometric proof that 1+2+...+${N} = ${sum}.`];
+  if (step >= 1) parts.push(`A staircase of ${sum} blocks (rows of 1 to ${N}).`);
+  if (step >= 3) parts.push('Duplicate and flip the staircase.');
+  if (step >= 4) parts.push(`Combine into a ${N} x ${N + 1} rectangle.`);
+  if (step >= 5) parts.push(`Rectangle area = ${N * (N + 1)}.`);
+  if (step >= 6) parts.push(`One staircase = half = ${sum}.`);
+  if (step >= 7) parts.push(`Formula: N(N+1)/2 = ${N}x${N + 1}/2 = ${sum}.`);
+  promptText.textContent = parts.join(' ');
+}
+
+// ─── Events ──────────────────────────────────────────
+rangeSlider.addEventListener('input', () => {
+  rangeValEl.textContent = rangeSlider.value;
+  resetAll();
+});
+
+btnStep.addEventListener('click', () => advanceStep());
+btnPlay.addEventListener('click', startAuto);
+btnReset.addEventListener('click', resetAll);
+
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(promptText.textContent).then(() => {
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+  });
+});
+
+window.addEventListener('resize', () => render());
+
+// ─── Init ────────────────────────────────────────────
+render();
+updatePrompt();
+</script>
+</body>
+</html>
